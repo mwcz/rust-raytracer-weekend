@@ -221,18 +221,6 @@ impl<T: Num + Copy + DivAssign> DivAssign<Vec3<T>> for Vec3<T> {
     }
 }
 
-// #[duplicate(
-//     name; [ Vec3<T> ]; [ &Vec3<T> ]; [ &mut Vec3<T> ]
-// )]
-// impl<T: Num + Copy + DivAssign> DivAssign<T> for name {
-//     #[inline]
-//     fn div_assign(&mut self, other: T) {
-//         self.x /= other;
-//         self.y /= other;
-//         self.z /= other;
-//     }
-// }
-
 impl<T: Num + Copy + DivAssign> DivAssign<T> for Vec3<T> {
     #[inline]
     fn div_assign(&mut self, other: T) {
@@ -398,7 +386,7 @@ impl<T: Num + Copy> Vec3<T> {
 
     /// Get the magnitude squared of this vector.
     #[inline]
-    fn mag_squared(&self) -> T {
+    fn length_squared(&self) -> T {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
@@ -423,23 +411,23 @@ impl<T: Num + Copy> Vec3<T> {
 impl<T: Float> Vec3<T> {
     /// Get the magnitude of this vector.
     #[inline]
-    fn mag(&self) -> T {
-        self.mag_squared().sqrt()
+    fn length(&self) -> T {
+        self.length_squared().sqrt()
     }
 
     /// Create a new vector that's this vector reduced to length 1.
     #[inline]
     fn unit(&self) -> Vec3<T> {
-        *self / (self.mag())
+        *self / (self.length())
     }
 
     /// Normalize this vector; reduce it to length 1.
     #[inline]
     fn self_unit(&mut self) -> &Vec3<T> {
-        let mag = self.mag();
-        self.x = self.x / mag;
-        self.y = self.y / mag;
-        self.z = self.z / mag;
+        let length = self.length();
+        self.x = self.x / length;
+        self.y = self.y / length;
+        self.z = self.z / length;
         self
     }
 }
@@ -462,22 +450,249 @@ struct Ray<T: Float> {
 
 #[allow(dead_code)]
 impl<T: Float> Ray<T> {
+    #[inline]
     fn at(&self, t: T) -> Vec3<T> {
         self.origin + self.direction * t
     }
 }
 
-// fn ray_color<T: Float, C: Num + Copy>(ray: &Ray<T>) -> Color<C> {
+// fn ray_color<T: Float>(ray: &Ray<T>) -> Color<T> {
+//     if hit_sphere(
+//         &Point3 {
+//             x: T::from(0.0).unwrap(),
+//             y: T::from(0.0).unwrap(),
+//             z: T::from(-1.0).unwrap(),
+//         },
+//         T::from(0.5).unwrap(),
+//         ray,
+//     ) {
+//         return Color {
+//             x: T::from(1.0).unwrap(),
+//             y: T::from(0.0).unwrap(),
+//             z: T::from(0.0).unwrap(),
+//         };
+//     }
+
+//     let one = T::one();
+//     let half = T::from(0.5).unwrap();
+
 //     let unit_direction = ray.direction.unit();
-//     let t = 0.5 * unit_direction.y + 1.0;
-//     let mut color = Color::<C> {
-//         x: 1.0,
-//         y: 1.0,
-//         z: 1.0,
+//     let t = unit_direction.y * half + one;
+
+//     let color1 = Color {
+//         x: one,
+//         y: one,
+//         z: one,
 //     };
 
-//     color.muls(1.0 - t)
+//     let color2 = Color {
+//         x: T::from(0.5).unwrap(),
+//         y: T::from(0.7).unwrap(),
+//         z: T::from(1.0).unwrap(),
+//     };
+
+//     color1 * (one - t) + color2 * t
 // }
+
+fn ray_color<T: Float>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
+    let mut rec = HitRecord {
+        p: Point3 {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        },
+        normal: Vec3 {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        },
+        t: T::zero(),
+        front_face: false,
+    };
+
+    if world.hit(ray, T::zero(), T::infinity(), &mut rec) {
+        return (rec.normal
+            + Vec3 {
+                x: T::one(),
+                y: T::one(),
+                z: T::one(),
+            })
+            * T::from(0.5).unwrap();
+    }
+
+    let unit_direction = ray.direction.unit();
+
+    let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
+
+    let color = Vec3 {
+        x: T::one(),
+        y: T::one(),
+        z: T::one(),
+    } * (T::from(1.0).unwrap() - t)
+        + Vec3 {
+            x: T::from(0.5).unwrap(),
+            y: T::from(0.7).unwrap(),
+            z: T::from(1.0).unwrap(),
+        } * t;
+
+    color
+
+    // let one = T::one();
+    // let half = T::from(0.5).unwrap();
+
+    // let cam = Point3 {
+    //     x: T::from(0.0).unwrap(),
+    //     y: T::from(0.0).unwrap(),
+    //     z: T::from(-1.0).unwrap(),
+    // };
+
+    // let t = hit_sphere(&cam, half, ray);
+
+    // if t > T::zero() {
+    //     let n = ray.at(t) - cam;
+    //     return Color {
+    //         x: n.x + one,
+    //         y: n.y + one,
+    //         z: n.z + one,
+    //     } * half;
+    // }
+
+    // let unit_direction = ray.direction.unit();
+    // let t = unit_direction.y * half + one;
+
+    // let color1 = Color {
+    //     x: one,
+    //     y: one,
+    //     z: one,
+    // };
+
+    // let color2 = Color {
+    //     x: T::from(0.5).unwrap(),
+    //     y: T::from(0.7).unwrap(),
+    //     z: T::from(1.0).unwrap(),
+    // };
+
+    // color1 * (one - t) + color2 * t
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                            HITTABLES                                           //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct HitRecord<T: Float> {
+    p: Point3<T>,
+    normal: Vec3<T>,
+    t: T,
+    front_face: bool,
+}
+
+impl<T: Float> HitRecord<T> {
+    fn set_face_normal(&mut self, ray: &Ray<T>, outward_normal: Vec3<T>) {
+        self.front_face = ray.direction.dot(&outward_normal) < T::zero();
+        self.normal = if self.front_face {
+            outward_normal
+        } else {
+            outward_normal * -T::one()
+        };
+    }
+}
+
+trait Hittable<T: Float> {
+    fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool;
+}
+
+/////////////////////
+//  HITTABLE LIST  //
+/////////////////////
+
+struct HittableList<T: Float> {
+    objects: Vec<Box<dyn Hittable<T>>>,
+}
+
+impl<T: Float> HittableList<T> {
+    fn clear(&mut self) {
+        self.objects.clear();
+    }
+
+    fn add(&mut self, obj: Box<dyn Hittable<T>>) {
+        self.objects.push(obj);
+    }
+
+    fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
+        // let mut rec = &*rec;
+        let mut temp_rec = HitRecord {
+            p: Point3 {
+                x: T::zero(),
+                y: T::zero(),
+                z: T::zero(),
+            },
+            normal: Vec3 {
+                x: T::zero(),
+                y: T::zero(),
+                z: T::zero(),
+            },
+            t: T::zero(),
+            front_face: false,
+        };
+        let mut hit_anything = false;
+        let mut closest_so_far = t_max;
+
+        for object in self.objects.iter() {
+            if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
+                hit_anything = true;
+                closest_so_far = temp_rec.t;
+                // rec = &temp_rec;
+            }
+        }
+
+        hit_anything
+    }
+}
+
+//////////////
+//  SPHERE  //
+//////////////
+
+struct Sphere<T: Float> {
+    center: Point3<T>,
+    radius: T,
+}
+
+impl<T: Float> Hittable<T> for Sphere<T> {
+    fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
+        let oc = ray.origin - self.center;
+        let a = ray.direction.length_squared();
+        let half_b = oc.dot(&ray.direction);
+        let c = oc.length_squared() - self.radius * self.radius;
+
+        let discriminant = half_b * half_b - a * c;
+
+        if discriminant < T::zero() {
+            return false;
+        }
+
+        let sqrtd = discriminant.sqrt();
+
+        // Find the nearest root that lies in the acceptable range.
+        let mut root = (-half_b - sqrtd) / a;
+
+        if root < t_min || t_max < root {
+            root = (-half_b + sqrtd) / a;
+            if root < t_min || t_max < root {
+                return false;
+            }
+        }
+
+        rec.t = root;
+        rec.p = ray.at(rec.t);
+
+        let outward_normal = (rec.p - self.center) / self.radius;
+
+        rec.set_face_normal(&ray, outward_normal);
+
+        true
+    }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              PPM                                               //
@@ -519,14 +734,59 @@ fn main() {
     // Image
 
     let aspect_ratio = 16.0 / 10.0;
-    let width: i32 = 400;
-    let height: i32 = width / (aspect_ratio as i32);
+    let width = 400.0;
+    let height = width / aspect_ratio;
+
+    // World
+
+    let mut world: HittableList<f64> = HittableList {
+        objects: Vec::new(),
+    };
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: 0.0,
+            z: -1.0,
+        },
+        radius: 0.5,
+    }));
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: -31.3,
+            z: -1.0,
+        },
+        radius: 31.0,
+    }));
 
     // Camera
 
     let viewport_height = 2.0;
-    let _viewport_width = aspect_ratio * viewport_height;
-    let _focal_length = 1.0;
+    let viewport_width = aspect_ratio * viewport_height;
+    let focal_length = 1.0;
+
+    let origin = Point3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    let horizontal = Vec3 {
+        x: viewport_width,
+        y: 0.0,
+        z: 0.0,
+    };
+    let vertical = Vec3 {
+        x: 0.0,
+        y: viewport_height,
+        z: 0.0,
+    };
+    let focal_vec = Vec3 {
+        x: 0.0,
+        y: 0.0,
+        z: focal_length,
+    };
+
+    let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focal_vec;
 
     // Render
 
@@ -534,22 +794,35 @@ fn main() {
     let mut pixels = vec![Vec3 { x: 0, y: 0, z: 0 }; (width * height) as usize];
 
     let mut i: usize = 0;
-    for y in (0..height).rev() {
-        for x in 0..width {
-            let v = &mut pixels[i];
-            v.x = x as u8;
-            v.y = y as u8;
-            v.z = 64 as u8;
+    for y in (0..(height as i32)).rev() {
+        for x in 0..(width as i32) {
+            let p = &mut pixels[i];
+
+            let u = (x as f64) / ((width as f64) - 1.0);
+            let v = (y as f64) / ((height as f64) - 1.0);
+
+            let ray = Ray {
+                origin,
+                direction: lower_left_corner + horizontal * u + vertical * v - origin,
+            };
+
+            let color = ray_color(&ray, &world);
+
+            p.x = (color.x * 255.0) as u8;
+            p.y = (color.y * 255.0) as u8;
+            p.z = (color.z * 255.0) as u8;
 
             i += 1;
         }
     }
 
     write_ppm(FinalImage {
-        width,
-        height,
+        width: width as i32,
+        height: height as i32,
         pixels,
     });
+
+    println!("done");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
