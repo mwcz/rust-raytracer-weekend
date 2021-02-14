@@ -2,6 +2,7 @@ use num::traits::Float;
 use num::traits::Num;
 use std::env;
 use std::fmt;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
@@ -232,158 +233,6 @@ impl<T: Num + Copy + DivAssign> DivAssign<T> for Vec3<T> {
 
 #[allow(dead_code)]
 impl<T: Num + Copy> Vec3<T> {
-    // ///  Create a new vector that's the sum of this vector and another.
-    // #[inline]
-    // fn addv(&self, other: &Self) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x + other.x,
-    //         y: self.y + other.y,
-    //         z: self.z + other.z,
-    //     }
-    // }
-
-    // ///  Add a vector into this vector.
-    // #[inline]
-    // fn self_addv(&mut self, other: &Self) -> &Vec3<T> {
-    //     self.x = self.x + other.x;
-    //     self.y = self.y + other.y;
-    //     self.z = self.z + other.z;
-    //     self
-    // }
-
-    // ///  Create a new vector that's the sum of this vector and a scalar.
-    // #[inline]
-    // fn adds(&self, s: T) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x + s,
-    //         y: self.y + s,
-    //         z: self.z + s,
-    //     }
-    // }
-
-    // ///  Add a scalar into this vector.
-    // #[inline]
-    // fn self_adds(&mut self, s: T) -> &Vec3<T> {
-    //     self.x = self.x + s;
-    //     self.y = self.y + s;
-    //     self.z = self.z + s;
-    //     self
-    // }
-
-    // ///  Create a new vector that's the difference between this vector and another.
-    // #[inline]
-    // fn subv(&self, other: &Self) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x - other.x,
-    //         y: self.y - other.y,
-    //         z: self.z - other.z,
-    //     }
-    // }
-
-    // ///  Subtract a vector into this vector.
-    // #[inline]
-    // fn self_subv(&mut self, other: &Self) -> &Vec3<T> {
-    //     self.x = self.x - other.x;
-    //     self.y = self.y - other.y;
-    //     self.z = self.z - other.z;
-    //     self
-    // }
-
-    // ///  Create a new vector that's this vector with a scalar subtracted.
-    // #[inline]
-    // fn subs(&self, s: T) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x - s,
-    //         y: self.y - s,
-    //         z: self.z - s,
-    //     }
-    // }
-
-    // ///  Subtract a scalar into this vector.
-    // #[inline]
-    // fn self_subs(&mut self, s: T) -> &Vec3<T> {
-    //     self.x = self.x - s;
-    //     self.y = self.y - s;
-    //     self.z = self.z - s;
-    //     self
-    // }
-
-    // ///  Create a new vector that's this vector divided by another vector.
-    // #[inline]
-    // fn divv(&self, other: Self) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x / other.x,
-    //         y: self.y / other.y,
-    //         z: self.z / other.z,
-    //     }
-    // }
-
-    // ///  Divide this vector by a scalar.
-    // #[inline]
-    // fn self_divv(&mut self, other: Self) -> &Vec3<T> {
-    //     self.x = self.x / other.x;
-    //     self.y = self.y / other.y;
-    //     self.z = self.z / other.z;
-    //     self
-    // }
-
-    // ///  Create a new vector that's this vector divided by a scalar.
-    // #[inline]
-    // fn divs(&self, s: T) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x / s,
-    //         y: self.y / s,
-    //         z: self.z / s,
-    //     }
-    // }
-
-    // ///  Divide this vector by a scalar.
-    // #[inline]
-    // fn self_divs(&mut self, s: T) -> &Vec3<T> {
-    //     self.x = self.x / s;
-    //     self.y = self.y / s;
-    //     self.z = self.z / s;
-    //     self
-    // }
-
-    // ///  Create a new vector that's this vector multiplied by another vector.
-    // #[inline]
-    // fn mulv(&self, other: Self) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x * other.x,
-    //         y: self.y * other.y,
-    //         z: self.z * other.z,
-    //     }
-    // }
-
-    // ///  Multiply this vector by a vector.
-    // #[inline]
-    // fn self_mulv(&mut self, other: Self) -> &Vec3<T> {
-    //     self.x = self.x * other.x;
-    //     self.y = self.y * other.y;
-    //     self.z = self.z * other.z;
-    //     self
-    // }
-
-    // ///  Create a new vector that's this vector multiplied by a scalar.
-    // #[inline]
-    // fn muls(&self, s: T) -> Vec3<T> {
-    //     Vec3 {
-    //         x: self.x * s,
-    //         y: self.y * s,
-    //         z: self.z * s,
-    //     }
-    // }
-
-    // ///  Multiply this vector by a scalar.
-    // #[inline]
-    // fn self_muls(&mut self, s: T) -> &Vec3<T> {
-    //     self.x = self.x * s;
-    //     self.y = self.y * s;
-    //     self.z = self.z * s;
-    //     self
-    // }
-
     /// Get the magnitude squared of this vector.
     #[inline]
     fn length_squared(&self) -> T {
@@ -456,45 +305,7 @@ impl<T: Float> Ray<T> {
     }
 }
 
-// fn ray_color<T: Float>(ray: &Ray<T>) -> Color<T> {
-//     if hit_sphere(
-//         &Point3 {
-//             x: T::from(0.0).unwrap(),
-//             y: T::from(0.0).unwrap(),
-//             z: T::from(-1.0).unwrap(),
-//         },
-//         T::from(0.5).unwrap(),
-//         ray,
-//     ) {
-//         return Color {
-//             x: T::from(1.0).unwrap(),
-//             y: T::from(0.0).unwrap(),
-//             z: T::from(0.0).unwrap(),
-//         };
-//     }
-
-//     let one = T::one();
-//     let half = T::from(0.5).unwrap();
-
-//     let unit_direction = ray.direction.unit();
-//     let t = unit_direction.y * half + one;
-
-//     let color1 = Color {
-//         x: one,
-//         y: one,
-//         z: one,
-//     };
-
-//     let color2 = Color {
-//         x: T::from(0.5).unwrap(),
-//         y: T::from(0.7).unwrap(),
-//         z: T::from(1.0).unwrap(),
-//     };
-
-//     color1 * (one - t) + color2 * t
-// }
-
-fn ray_color<T: Float>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
+fn ray_color<T: Float + Debug>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
     let mut rec = HitRecord {
         p: Point3 {
             x: T::zero(),
@@ -510,7 +321,11 @@ fn ray_color<T: Float>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
         front_face: false,
     };
 
+    let out = format!("{:?}", rec);
+
     if world.hit(ray, T::zero(), T::infinity(), &mut rec) {
+        // println!("{}", out);
+        // println!("{:?}", rec);
         return (rec.normal
             + Vec3 {
                 x: T::one(),
@@ -536,49 +351,13 @@ fn ray_color<T: Float>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
         } * t;
 
     color
-
-    // let one = T::one();
-    // let half = T::from(0.5).unwrap();
-
-    // let cam = Point3 {
-    //     x: T::from(0.0).unwrap(),
-    //     y: T::from(0.0).unwrap(),
-    //     z: T::from(-1.0).unwrap(),
-    // };
-
-    // let t = hit_sphere(&cam, half, ray);
-
-    // if t > T::zero() {
-    //     let n = ray.at(t) - cam;
-    //     return Color {
-    //         x: n.x + one,
-    //         y: n.y + one,
-    //         z: n.z + one,
-    //     } * half;
-    // }
-
-    // let unit_direction = ray.direction.unit();
-    // let t = unit_direction.y * half + one;
-
-    // let color1 = Color {
-    //     x: one,
-    //     y: one,
-    //     z: one,
-    // };
-
-    // let color2 = Color {
-    //     x: T::from(0.5).unwrap(),
-    //     y: T::from(0.7).unwrap(),
-    //     z: T::from(1.0).unwrap(),
-    // };
-
-    // color1 * (one - t) + color2 * t
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                            HITTABLES                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
 struct HitRecord<T: Float> {
     p: Point3<T>,
     normal: Vec3<T>,
@@ -609,7 +388,7 @@ struct HittableList<T: Float> {
     objects: Vec<Box<dyn Hittable<T>>>,
 }
 
-impl<T: Float> HittableList<T> {
+impl<T: Float + Debug> HittableList<T> {
     fn clear(&mut self) {
         self.objects.clear();
     }
@@ -620,27 +399,31 @@ impl<T: Float> HittableList<T> {
 
     fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
         // let mut rec = &*rec;
-        let mut temp_rec = HitRecord {
-            p: Point3 {
-                x: T::zero(),
-                y: T::zero(),
-                z: T::zero(),
-            },
-            normal: Vec3 {
-                x: T::zero(),
-                y: T::zero(),
-                z: T::zero(),
-            },
-            t: T::zero(),
-            front_face: false,
-        };
+        // let mut temp_rec = HitRecord {
+        //     p: Point3 {
+        //         x: T::zero(),
+        //         y: T::zero(),
+        //         z: T::zero(),
+        //     },
+        //     normal: Vec3 {
+        //         x: T::zero(),
+        //         y: T::zero(),
+        //         z: T::zero(),
+        //     },
+        //     t: T::zero(),
+        //     front_face: false,
+        // };
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
+        let mut rec = rec;
 
         for object in self.objects.iter() {
-            if object.hit(ray, t_min, closest_so_far, &mut temp_rec) {
+            // let o = format!("BFR {:?}", temp_rec);
+            if object.hit(ray, t_min, closest_so_far, &mut rec) {
+                // println!("BFR {}", o);
+                // println!("AFT {:?}\n", temp_rec);
                 hit_anything = true;
-                closest_so_far = temp_rec.t;
+                closest_so_far = rec.t;
                 // rec = &temp_rec;
             }
         }
@@ -663,9 +446,9 @@ impl<T: Float> Hittable<T> for Sphere<T> {
         let oc = ray.origin - self.center;
         let a = ray.direction.length_squared();
         let half_b = oc.dot(&ray.direction);
-        let c = oc.length_squared() - self.radius * self.radius;
+        let c = oc.length_squared() - self.radius.powi(2);
 
-        let discriminant = half_b * half_b - a * c;
+        let discriminant = half_b.powi(2) - a * c;
 
         if discriminant < T::zero() {
             return false;
@@ -734,7 +517,7 @@ fn main() {
     // Image
 
     let aspect_ratio = 16.0 / 10.0;
-    let width = 400.0;
+    let width = 1440.0;
     let height = width / aspect_ratio;
 
     // World
@@ -753,7 +536,7 @@ fn main() {
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
-            y: -31.3,
+            y: -31.45,
             z: -1.0,
         },
         radius: 31.0,
@@ -811,6 +594,8 @@ fn main() {
             p.x = (color.x * 255.0) as u8;
             p.y = (color.y * 255.0) as u8;
             p.z = (color.z * 255.0) as u8;
+
+            // println!("RAY P({},{}) C({},{},{})", x, y, p.x, p.y, p.z);
 
             i += 1;
         }
