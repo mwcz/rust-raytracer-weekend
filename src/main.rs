@@ -1,5 +1,7 @@
-use num::traits::Float;
-use num::traits::Num;
+use fmt::Display;
+use num::clamp;
+use num::traits::{Float, Num};
+use rand::prelude::*;
 use std::env;
 use std::fmt;
 use std::fmt::Debug;
@@ -22,6 +24,44 @@ pub struct Vec3<T: Num + Copy> {
 // Alias Point3 and Color to avoid accidental concept pollution.
 type Point3<T> = Vec3<T>;
 type Color<T> = Vec3<T>;
+
+//////////////
+//  RANDOM  //
+//////////////
+
+impl<T: Float> Vec3<T> {
+    fn random() -> Vec3<T> {
+        let mut rng = rand::thread_rng();
+
+        Vec3 {
+            x: T::from(rng.gen::<f64>()).unwrap(),
+            y: T::from(rng.gen::<f64>()).unwrap(),
+            z: T::from(rng.gen::<f64>()).unwrap(),
+        }
+    }
+
+    fn random_range(min: f64, max: f64) -> Vec3<T> {
+        let mut rng = rand::thread_rng();
+
+        Vec3 {
+            x: T::from(rng.gen_range(min..max)).unwrap(),
+            y: T::from(rng.gen_range(min..max)).unwrap(),
+            z: T::from(rng.gen_range(min..max)).unwrap(),
+        }
+    }
+
+    fn random_in_unit_sphere() -> Vec3<T> {
+        loop {
+            let p = Vec3::random_range(-1.0, 1.0);
+
+            if p.length_squared() >= T::one() {
+                continue;
+            }
+
+            return p;
+        }
+    }
+}
 
 ///////////
 //  ADD  //
@@ -281,9 +321,80 @@ impl<T: Float> Vec3<T> {
     }
 }
 
-impl<T: fmt::Display + Num + Copy> fmt::Display for Vec3<T> {
+impl<T: Display + Num + Copy> Display for Vec3<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                             CAMERA                                             //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct Camera<T: Float + Debug> {
+    aspect_ratio: T,
+    viewport_height: T,
+    viewport_width: T,
+    focal_length: T,
+
+    origin: Point3<T>,
+    lower_left_corner: Point3<T>,
+    horizontal: Vec3<T>,
+    vertical: Vec3<T>,
+}
+
+impl<T: Float + Debug> Camera<T> {
+    /// Create a new Camera.
+    fn new(aspect_ratio: T, viewport_height: T) -> Camera<T> {
+        let viewport_width = aspect_ratio * viewport_height;
+        let focal_length = T::one();
+
+        let origin = Point3 {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        };
+
+        let horizontal = Point3 {
+            x: viewport_width,
+            y: T::zero(),
+            z: T::zero(),
+        };
+
+        let vertical = Point3 {
+            x: T::zero(),
+            y: viewport_height,
+            z: T::zero(),
+        };
+
+        let lower_left_corner = origin
+            - horizontal / T::from(2.0).unwrap()
+            - vertical / T::from(2.0).unwrap()
+            - Vec3 {
+                x: T::zero(),
+                y: T::zero(),
+                z: focal_length,
+            };
+
+        Camera {
+            aspect_ratio,
+            viewport_height,
+            viewport_width,
+            focal_length,
+            origin,
+            horizontal,
+            vertical,
+            lower_left_corner,
+        }
+    }
+
+    /// Get a ray at (u,v).
+    fn get_ray(&self, u: T, v: T) -> Ray<T> {
+        Ray {
+            origin: self.origin,
+            direction: self.lower_left_corner + self.horizontal * u + self.vertical * v
+                - self.origin,
+        }
     }
 }
 
@@ -321,11 +432,7 @@ fn ray_color<T: Float + Debug>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T
         front_face: false,
     };
 
-    let out = format!("{:?}", rec);
-
     if world.hit(ray, T::zero(), T::infinity(), &mut rec) {
-        // println!("{}", out);
-        // println!("{:?}", rec);
         return (rec.normal
             + Vec3 {
                 x: T::one(),
@@ -482,9 +589,10 @@ impl<T: Float> Hittable<T> for Sphere<T> {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct FinalImage {
-    pixels: Vec<Color<u8>>,
+    pixels: Vec<Color<f64>>,
     width: i32,
     height: i32,
+    samples_per_pixel: i32,
 }
 
 /// Write a PPM image to a temp directory.  Image size and contents are passed in a FinalImage.
@@ -505,8 +613,16 @@ fn write_ppm(image_data: FinalImage) {
     writeln!(&mut file, "255").unwrap(); // maximum RGB component value
 
     for rgb in image_data.pixels.iter() {
-        writeln!(&mut file, "{} {} {}   ", rgb.x, rgb.y, rgb.z).unwrap();
+        write_color(&mut file, rgb, image_data.samples_per_pixel);
     }
+}
+
+fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32) {
+    let scale = 1.0 / (samples_per_pixel as f64);
+    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999);
+    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999);
+    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999);
+    writeln!(file, "{} {} {}   ", r as u8, g as u8, b as u8).unwrap();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -514,12 +630,6 @@ fn write_ppm(image_data: FinalImage) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn main() {
-    // Image
-
-    let aspect_ratio = 16.0 / 10.0;
-    let width = 1440.0;
-    let height = width / aspect_ratio;
-
     // World
 
     let mut world: HittableList<f64> = HittableList {
@@ -542,60 +652,61 @@ fn main() {
         radius: 31.0,
     }));
 
+    // Image
+
+    let aspect_ratio = 16.0 / 10.0;
+    let width = 400.0;
+    let height = width / aspect_ratio;
+    let samples_per_pixel: i32 = 100;
+
     // Camera
 
     let viewport_height = 2.0;
-    let viewport_width = aspect_ratio * viewport_height;
-    let focal_length = 1.0;
-
-    let origin = Point3 {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-    };
-    let horizontal = Vec3 {
-        x: viewport_width,
-        y: 0.0,
-        z: 0.0,
-    };
-    let vertical = Vec3 {
-        x: 0.0,
-        y: viewport_height,
-        z: 0.0,
-    };
-    let focal_vec = Vec3 {
-        x: 0.0,
-        y: 0.0,
-        z: focal_length,
-    };
-
-    let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focal_vec;
+    let cam = Camera::new(aspect_ratio, viewport_height);
 
     // Render
 
     // Generate a fake image to test ppm output
-    let mut pixels = vec![Vec3 { x: 0, y: 0, z: 0 }; (width * height) as usize];
+    let mut pixels = vec![
+        Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0
+        };
+        (width * height) as usize
+    ];
+
+    let mut rng = rand::thread_rng();
 
     let mut i: usize = 0;
     for y in (0..(height as i32)).rev() {
         for x in 0..(width as i32) {
             let p = &mut pixels[i];
 
-            let u = (x as f64) / ((width as f64) - 1.0);
-            let v = (y as f64) / ((height as f64) - 1.0);
+            for _ in 0..samples_per_pixel {
+                // don't use RNG if there's only one sample per pixel
+                let u_rand = if samples_per_pixel > 1 {
+                    rng.gen::<f64>()
+                } else {
+                    1.0
+                };
 
-            let ray = Ray {
-                origin,
-                direction: lower_left_corner + horizontal * u + vertical * v - origin,
-            };
+                let v_rand = if samples_per_pixel > 1 {
+                    rng.gen::<f64>()
+                } else {
+                    1.0
+                };
+                let u = (u_rand + x as f64) / (width - 1.0);
+                let v = (v_rand + y as f64) / (height - 1.0);
 
-            let color = ray_color(&ray, &world);
+                let ray = cam.get_ray(u, v);
 
-            p.x = (color.x * 255.0) as u8;
-            p.y = (color.y * 255.0) as u8;
-            p.z = (color.z * 255.0) as u8;
+                let color = ray_color(&ray, &world);
 
-            // println!("RAY P({},{}) C({},{},{})", x, y, p.x, p.y, p.z);
+                p.x += color.x;
+                p.y += color.y;
+                p.z += color.z;
+            }
 
             i += 1;
         }
@@ -605,6 +716,7 @@ fn main() {
         width: width as i32,
         height: height as i32,
         pixels,
+        samples_per_pixel,
     });
 
     println!("done");
