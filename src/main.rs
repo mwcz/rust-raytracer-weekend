@@ -7,7 +7,7 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Deref, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::time;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,6 +61,19 @@ impl<T: Float> Vec3<T> {
             return p;
         }
     }
+
+    fn random_unit_vector() -> Vec3<T> {
+        Vec3::<T>::random_in_unit_sphere().unit()
+    }
+
+    fn random_in_hemisphere(normal: &Vec3<T>) -> Vec3<T> {
+        let in_unit_sphere = Vec3::random_in_unit_sphere();
+        if in_unit_sphere.dot(normal) > T::zero() {
+            in_unit_sphere
+        } else {
+            -in_unit_sphere
+        }
+    }
 }
 
 ///////////
@@ -112,6 +125,23 @@ impl<T: Num + Copy + AddAssign> AddAssign<T> for Vec3<T> {
         self.x += other;
         self.y += other;
         self.z += other;
+    }
+}
+
+///////////
+//  NEG  //
+///////////
+
+impl<T: Num + Copy + Neg + Neg<Output = T>> Neg for Vec3<T> {
+    type Output = Self;
+
+    #[inline]
+    fn neg(self) -> Self {
+        Self {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
     }
 }
 
@@ -416,33 +446,33 @@ impl<T: Float> Ray<T> {
     }
 }
 
-fn ray_color<T: Float + Debug>(ray: &Ray<T>, world: &HittableList<T>) -> Color<T> {
-    let mut rec = HitRecord {
-        p: Point3 {
+fn ray_color<T: Float + Debug>(
+    r: &Ray<T>,
+    world: &HittableList<T>,
+    depth: i32,
+    diffuse_renderer: &dyn Fn(Vec3<T>, Vec3<T>) -> Vec3<T>,
+) -> Color<T> {
+    if depth <= 0 {
+        return Color {
             x: T::zero(),
             y: T::zero(),
             z: T::zero(),
-        },
-        normal: Vec3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
-        },
-        t: T::zero(),
-        front_face: false,
-    };
-
-    if world.hit(ray, T::zero(), T::infinity(), &mut rec) {
-        return (rec.normal
-            + Vec3 {
-                x: T::one(),
-                y: T::one(),
-                z: T::one(),
-            })
-            * T::from(0.5).unwrap();
+        };
     }
 
-    let unit_direction = ray.direction.unit();
+    let mut rec = HitRecord::new();
+
+    if world.hit(r, T::from(0.001).unwrap(), T::infinity(), &mut rec) {
+        let target = diffuse_renderer(rec.p, rec.normal);
+
+        let new_ray = Ray {
+            origin: rec.p,
+            direction: target - rec.p,
+        };
+        return ray_color(&new_ray, world, depth - 1, diffuse_renderer) * T::from(0.5).unwrap();
+    }
+
+    let unit_direction = r.direction.unit();
 
     let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
 
@@ -473,6 +503,23 @@ struct HitRecord<T: Float> {
 }
 
 impl<T: Float> HitRecord<T> {
+    fn new() -> HitRecord<T> {
+        HitRecord {
+            p: Point3 {
+                x: T::zero(),
+                y: T::zero(),
+                z: T::zero(),
+            },
+            normal: Vec3 {
+                x: T::zero(),
+                y: T::zero(),
+                z: T::zero(),
+            },
+            t: T::zero(),
+            front_face: false,
+        }
+    }
+
     fn set_face_normal(&mut self, ray: &Ray<T>, outward_normal: Vec3<T>) {
         self.front_face = ray.direction.dot(&outward_normal) < T::zero();
         self.normal = if self.front_face {
@@ -504,34 +551,15 @@ impl<T: Float + Debug> HittableList<T> {
         self.objects.push(obj);
     }
 
-    fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
-        // let mut rec = &*rec;
-        // let mut temp_rec = HitRecord {
-        //     p: Point3 {
-        //         x: T::zero(),
-        //         y: T::zero(),
-        //         z: T::zero(),
-        //     },
-        //     normal: Vec3 {
-        //         x: T::zero(),
-        //         y: T::zero(),
-        //         z: T::zero(),
-        //     },
-        //     t: T::zero(),
-        //     front_face: false,
-        // };
+    fn hit(&self, r: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
         let mut rec = rec;
 
         for object in self.objects.iter() {
-            // let o = format!("BFR {:?}", temp_rec);
-            if object.hit(ray, t_min, closest_so_far, &mut rec) {
-                // println!("BFR {}", o);
-                // println!("AFT {:?}\n", temp_rec);
+            if object.hit(r, t_min, closest_so_far, &mut rec) {
                 hit_anything = true;
                 closest_so_far = rec.t;
-                // rec = &temp_rec;
             }
         }
 
@@ -549,13 +577,13 @@ struct Sphere<T: Float> {
 }
 
 impl<T: Float> Hittable<T> for Sphere<T> {
-    fn hit(&self, ray: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
-        let oc = ray.origin - self.center;
-        let a = ray.direction.length_squared();
-        let half_b = oc.dot(&ray.direction);
-        let c = oc.length_squared() - self.radius.powi(2);
+    fn hit(&self, r: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
+        let oc = r.origin - self.center;
+        let a = r.direction.length_squared();
+        let half_b = oc.dot(&r.direction);
+        let c = oc.length_squared() - self.radius * self.radius;
 
-        let discriminant = half_b.powi(2) - a * c;
+        let discriminant = half_b * half_b - a * c;
 
         if discriminant < T::zero() {
             return false;
@@ -574,15 +602,43 @@ impl<T: Float> Hittable<T> for Sphere<T> {
         }
 
         rec.t = root;
-        rec.p = ray.at(rec.t);
+        rec.p = r.at(rec.t);
 
         let outward_normal = (rec.p - self.center) / self.radius;
 
-        rec.set_face_normal(&ray, outward_normal);
+        rec.set_face_normal(&r, outward_normal);
 
         true
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                       DIFFUSE RENDERERS                                        //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// Raytracing in one weekend hack
+fn rtiowh_hack<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
+    p + normal + Vec3::<T>::random_in_unit_sphere()
+}
+
+/// True lambertian reflection
+fn true_lambert<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
+    p + normal + Vec3::<T>::random_unit_vector()
+}
+
+/// The most intuitive approach to diffuse rendering; cast a random bounce ray in the normal hemisphere
+fn naive_hemisphere<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
+    p + Vec3::<T>::random_in_hemisphere(&normal)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                           MATERIALS                                            //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TODO resume here
+
+// struct<T: Float> Material<T> {
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              PPM                                               //
@@ -619,9 +675,10 @@ fn write_ppm(image_data: FinalImage) {
 
 fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32) {
     let scale = 1.0 / (samples_per_pixel as f64);
-    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999);
-    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999);
-    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999);
+    // sqrt applies gamma 2, ie raising the color to the power of 1/gamma, where gamma is 2.
+    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999).sqrt();
+    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999).sqrt();
+    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999).sqrt();
     writeln!(file, "{} {} {}   ", r as u8, g as u8, b as u8).unwrap();
 }
 
@@ -630,11 +687,26 @@ fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn main() {
+    // Configuration
+
+    let aspect_ratio = 16.0 / 10.0;
+    let width = 1200.0;
+    let height = width / aspect_ratio;
+    let samples_per_pixel: i32 = 400;
+    let max_depth = 100;
+    let diffuse_renderer = &true_lambert;
+
+    // RNG
+
+    let mut rng = rand::thread_rng();
+
     // World
 
     let mut world: HittableList<f64> = HittableList {
         objects: Vec::new(),
     };
+
+    // Center sphere
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
@@ -643,6 +715,20 @@ fn main() {
         },
         radius: 0.5,
     }));
+
+    // Add some random spheres
+    for i in 0..100 {
+        world.add(Box::new(Sphere {
+            center: Point3 {
+                x: 5.0 * (rng.gen::<f64>() - 0.5),
+                y: 5.0 * (rng.gen::<f64>() - 0.5),
+                z: 2.0 * (rng.gen::<f64>() - 1.0),
+            },
+            radius: 0.2,
+        }));
+    }
+
+    // "World" sphere
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
@@ -652,13 +738,6 @@ fn main() {
         radius: 31.0,
     }));
 
-    // Image
-
-    let aspect_ratio = 16.0 / 10.0;
-    let width = 400.0;
-    let height = width / aspect_ratio;
-    let samples_per_pixel: i32 = 100;
-
     // Camera
 
     let viewport_height = 2.0;
@@ -666,7 +745,6 @@ fn main() {
 
     // Render
 
-    // Generate a fake image to test ppm output
     let mut pixels = vec![
         Vec3 {
             x: 0.0,
@@ -675,8 +753,6 @@ fn main() {
         };
         (width * height) as usize
     ];
-
-    let mut rng = rand::thread_rng();
 
     let mut i: usize = 0;
     for y in (0..(height as i32)).rev() {
@@ -696,16 +772,13 @@ fn main() {
                 } else {
                     1.0
                 };
+
                 let u = (u_rand + x as f64) / (width - 1.0);
                 let v = (v_rand + y as f64) / (height - 1.0);
 
                 let ray = cam.get_ray(u, v);
 
-                let color = ray_color(&ray, &world);
-
-                p.x += color.x;
-                p.y += color.y;
-                p.z += color.z;
+                *p += ray_color(&ray, &world, max_depth, diffuse_renderer);
             }
 
             i += 1;
