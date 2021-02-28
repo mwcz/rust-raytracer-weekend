@@ -7,14 +7,14 @@ use std::fmt;
 use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
-use std::ops::{Add, AddAssign, Deref, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::time;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              VEC3                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3<T: Num + Copy> {
     x: T,
     y: T,
@@ -25,11 +25,8 @@ pub struct Vec3<T: Num + Copy> {
 type Point3<T> = Vec3<T>;
 type Color<T> = Vec3<T>;
 
-//////////////
-//  RANDOM  //
-//////////////
-
 impl<T: Float> Vec3<T> {
+    /// Create a vector randomly seeded with values in the range [0..1)
     fn random() -> Vec3<T> {
         let mut rng = rand::thread_rng();
 
@@ -40,6 +37,7 @@ impl<T: Float> Vec3<T> {
         }
     }
 
+    /// Create a vector randomly seeded with values in the given range.
     fn random_range(min: f64, max: f64) -> Vec3<T> {
         let mut rng = rand::thread_rng();
 
@@ -50,6 +48,7 @@ impl<T: Float> Vec3<T> {
         }
     }
 
+    /// Create a vector randomly seeded with a point inside the unit sphere.
     fn random_in_unit_sphere() -> Vec3<T> {
         loop {
             let p = Vec3::random_range(-1.0, 1.0);
@@ -62,10 +61,13 @@ impl<T: Float> Vec3<T> {
         }
     }
 
+    /// Create a unit vector pointing in a random direction.
     fn random_unit_vector() -> Vec3<T> {
         Vec3::<T>::random_in_unit_sphere().unit()
     }
 
+    /// Create a vector randomly seeded with a point inside the unit hemisphere occupied by the
+    /// given normal.
     fn random_in_hemisphere(normal: &Vec3<T>) -> Vec3<T> {
         let in_unit_sphere = Vec3::random_in_unit_sphere();
         if in_unit_sphere.dot(normal) > T::zero() {
@@ -74,7 +76,28 @@ impl<T: Float> Vec3<T> {
             -in_unit_sphere
         }
     }
+
+    /// Return true if the vector is very close to the zero vector.
+    fn near_zero(&self) -> bool {
+        let s = T::from(1e-8).unwrap();
+        self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
 }
+
+// impl<T: Float> Clone for Vec3<T> {
+//     fn clone(&self) -> Self {
+//         Vec3 {
+//             x: self.x,
+//             y: self.y,
+//             z: self.z,
+//         }
+//     }
+//     fn clone_from(&mut self, source: &Self) {
+//         self.x = source.x;
+//         self.y = source.y;
+//         self.z = source.z;
+//     }
+// }
 
 ///////////
 //  ADD  //
@@ -361,6 +384,7 @@ impl<T: Display + Num + Copy> Display for Vec3<T> {
 //                                             CAMERA                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#[allow(dead_code)]
 struct Camera<T: Float + Debug> {
     aspect_ratio: T,
     viewport_height: T,
@@ -432,7 +456,7 @@ impl<T: Float + Debug> Camera<T> {
 //                                              RAY                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Ray<T: Float> {
     origin: Point3<T>,
     direction: Vec3<T>,
@@ -445,6 +469,31 @@ impl<T: Float> Ray<T> {
         self.origin + self.direction * t
     }
 }
+
+// impl<T: Float + Copy> Clone for Ray<T> {
+//     fn clone(&self) -> Self {
+//         Ray {
+//             origin: Vec3 {
+//                 x: self.origin.x,
+//                 y: self.origin.y,
+//                 z: self.origin.z,
+//             },
+//             direction: Vec3 {
+//                 x: self.direction.x,
+//                 y: self.direction.y,
+//                 z: self.direction.z,
+//             },
+//         }
+//     }
+//     fn clone_from(&mut self, source: &Self) {
+//         self.origin.x = source.origin.x;
+//         self.origin.y = source.origin.y;
+//         self.origin.z = source.origin.z;
+//         self.direction.x = source.direction.x;
+//         self.direction.y = source.direction.y;
+//         self.direction.z = source.direction.z;
+//     }
+// }
 
 fn ray_color<T: Float + Debug>(
     r: &Ray<T>,
@@ -494,10 +543,10 @@ fn ray_color<T: Float + Debug>(
 //                                            HITTABLES                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug)]
 struct HitRecord<T: Float> {
     p: Point3<T>,
     normal: Vec3<T>,
+    // material: Material<T>,
     t: T,
     front_face: bool,
 }
@@ -574,6 +623,7 @@ impl<T: Float + Debug> HittableList<T> {
 struct Sphere<T: Float> {
     center: Point3<T>,
     radius: T,
+    // material: Material<T>,
 }
 
 impl<T: Float> Hittable<T> for Sphere<T> {
@@ -607,38 +657,78 @@ impl<T: Float> Hittable<T> for Sphere<T> {
         let outward_normal = (rec.p - self.center) / self.radius;
 
         rec.set_face_normal(&r, outward_normal);
+        // rec.material = self.material;
 
         true
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                       DIFFUSE RENDERERS                                        //
+//                                           MATERIALS                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+trait Material<T: Float> {
+    fn scatter(
+        &self,
+        r_in: &Ray<T>,
+        rec: &mut HitRecord<T>,
+        attenuation: &mut Color<T>,
+        scattered: &mut Ray<T>,
+    ) -> bool;
+}
+
+struct MatLambertian<T: Float> {
+    albedo: Color<T>,
+}
+
+impl<T: Float> Material<T> for MatLambertian<T> {
+    fn scatter(
+        &self,
+        r_in: &Ray<T>,
+        rec: &mut HitRecord<T>,
+        attenuation: &mut Color<T>,
+        scattered: &mut Ray<T>,
+    ) -> bool {
+        let mut scatter_direction = rec.normal + Vec3::<T>::random_unit_vector();
+
+        // avoid scattering when near zero
+        if scatter_direction.near_zero() {
+            // scatter_direction.clone_from(&rec.normal);
+            scatter_direction = rec.normal;
+        }
+
+        let scatter_ray = Ray {
+            origin: rec.p,
+            direction: scatter_direction,
+        };
+
+        // scattered.clone_from(&scatter_ray);
+        *scattered = scatter_ray;
+
+        // attenuation.clone_from(&self.albedo);
+        *attenuation = self.albedo;
+
+        true
+    }
+}
+
 /// Raytracing in one weekend hack
+#[allow(dead_code)]
 fn rtiowh_hack<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
     p + normal + Vec3::<T>::random_in_unit_sphere()
 }
 
 /// True lambertian reflection
+#[allow(dead_code)]
 fn true_lambert<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
     p + normal + Vec3::<T>::random_unit_vector()
 }
 
 /// The most intuitive approach to diffuse rendering; cast a random bounce ray in the normal hemisphere
+#[allow(dead_code)]
 fn naive_hemisphere<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
     p + Vec3::<T>::random_in_hemisphere(&normal)
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                           MATERIALS                                            //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// TODO resume here
-
-// struct<T: Float> Material<T> {
-// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              PPM                                               //
@@ -717,16 +807,16 @@ fn main() {
     }));
 
     // Add some random spheres
-    for i in 0..100 {
-        world.add(Box::new(Sphere {
-            center: Point3 {
-                x: 5.0 * (rng.gen::<f64>() - 0.5),
-                y: 5.0 * (rng.gen::<f64>() - 0.5),
-                z: 2.0 * (rng.gen::<f64>() - 1.0),
-            },
-            radius: 0.2,
-        }));
-    }
+    // for i in 0..100 {
+    //     world.add(Box::new(Sphere {
+    //         center: Point3 {
+    //             x: 5.0 * (rng.gen::<f64>() - 0.5),
+    //             y: 5.0 * (rng.gen::<f64>() - 0.5),
+    //             z: 2.0 * (rng.gen::<f64>() - 1.0),
+    //         },
+    //         radius: 0.2,
+    //     }));
+    // }
 
     // "World" sphere
     world.add(Box::new(Sphere {
