@@ -8,6 +8,7 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::Write;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::rc::Rc;
 use std::time;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -27,7 +28,16 @@ type Color<T> = Vec3<T>;
 
 #[allow(dead_code)]
 impl<T: Float> Vec3<T> {
+    fn zero() -> Vec3<T> {
+        Vec3 {
+            x: T::zero(),
+            y: T::zero(),
+            z: T::zero(),
+        }
+    }
+
     /// Create a vector randomly seeded with values in the range [0..1)
+    #[allow(dead_code)]
     fn random() -> Vec3<T> {
         let mut rng = rand::thread_rng();
 
@@ -82,6 +92,11 @@ impl<T: Float> Vec3<T> {
     fn near_zero(&self) -> bool {
         let s = T::from(1e-8).unwrap();
         self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
+    }
+
+    // Reflect vector v off normal n.
+    fn reflect(v: Vec3<T>, n: Vec3<T>) -> Vec3<T> {
+        n * v.dot(&n) * T::from(2.0).unwrap()
     }
 }
 
@@ -404,11 +419,7 @@ impl<T: Float + Debug> Camera<T> {
         let viewport_width = aspect_ratio * viewport_height;
         let focal_length = T::one();
 
-        let origin = Point3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
-        };
+        let origin = Point3::zero();
 
         let horizontal = Point3 {
             x: viewport_width,
@@ -465,12 +476,20 @@ struct Ray<T: Float> {
 
 #[allow(dead_code)]
 impl<T: Float> Ray<T> {
+    fn new() -> Ray<T> {
+        Ray {
+            origin: Point3::zero(),
+            direction: Vec3::zero(),
+        }
+    }
+
     #[inline]
     fn at(&self, t: T) -> Vec3<T> {
         self.origin + self.direction * t
     }
 }
 
+// Possibly implement this later for more efficient cloning.
 // impl<T: Float + Copy> Clone for Ray<T> {
 //     fn clone(&self) -> Self {
 //         Ray {
@@ -498,28 +517,36 @@ impl<T: Float> Ray<T> {
 
 fn ray_color<T: Float + Debug>(
     r: &Ray<T>,
+    rec: &mut HitRecord<T>,
     world: &HittableList<T>,
     depth: i32,
-    diffuse_renderer: &dyn Fn(Vec3<T>, Vec3<T>) -> Vec3<T>,
 ) -> Color<T> {
     if depth <= 0 {
-        return Color {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
-        };
+        return Color::zero();
     }
 
-    let mut rec = HitRecord::new();
+    if world.hit(r, T::from(0.001).unwrap(), T::infinity(), rec) {
+        let mut scattered = Ray::<T>::new();
+        let mut attenuation = Color::<T>::zero();
 
-    if world.hit(r, T::from(0.001).unwrap(), T::infinity(), &mut rec) {
-        let target = diffuse_renderer(rec.p, rec.normal);
+        let is_scattered = rec
+            .material
+            .scatter(&r, rec, &mut attenuation, &mut scattered);
 
-        let new_ray = Ray {
-            origin: rec.p,
-            direction: target - rec.p,
-        };
-        return ray_color(&new_ray, world, depth - 1, diffuse_renderer) * T::from(0.5).unwrap();
+        if is_scattered {
+            return ray_color(&scattered, rec, world, depth - 1);
+        } else {
+            return Color::<T>::zero();
+        }
+
+        // let target = diffuse_renderer(rec.p.clone(), rec.normal.clone());
+
+        // let new_ray = Ray {
+        //     origin: rec.p.clone(),
+        //     direction: target - rec.p.clone(),
+        // };
+        // return ray_color(&new_ray, rec, world, depth - 1, diffuse_renderer)
+        //     * T::from(0.5).unwrap();
     }
 
     let unit_direction = r.direction.unit();
@@ -530,7 +557,7 @@ fn ray_color<T: Float + Debug>(
         x: T::one(),
         y: T::one(),
         z: T::one(),
-    } * (T::from(1.0).unwrap() - t)
+    } * (T::one() - t)
         + Vec3 {
             x: T::from(0.5).unwrap(),
             y: T::from(0.7).unwrap(),
@@ -547,26 +574,19 @@ fn ray_color<T: Float + Debug>(
 struct HitRecord<T: Float> {
     p: Point3<T>,
     normal: Vec3<T>,
-    // material: Material<T>,
+    material: Rc<dyn Material<T>>,
     t: T,
     front_face: bool,
 }
 
 impl<T: Float> HitRecord<T> {
-    fn new() -> HitRecord<T> {
+    fn new(material: Rc<dyn Material<T>>) -> HitRecord<T> {
         HitRecord {
-            p: Point3 {
-                x: T::zero(),
-                y: T::zero(),
-                z: T::zero(),
-            },
-            normal: Vec3 {
-                x: T::zero(),
-                y: T::zero(),
-                z: T::zero(),
-            },
+            p: Point3::zero(),
+            normal: Vec3::zero(),
             t: T::zero(),
             front_face: false,
+            material,
         }
     }
 
@@ -594,6 +614,7 @@ struct HittableList<T: Float> {
 
 #[allow(dead_code)]
 impl<T: Float + Debug> HittableList<T> {
+    #[allow(dead_code)]
     fn clear(&mut self) {
         self.objects.clear();
     }
@@ -625,7 +646,7 @@ impl<T: Float + Debug> HittableList<T> {
 struct Sphere<T: Float> {
     center: Point3<T>,
     radius: T,
-    // material: Material<T>,
+    material: Rc<dyn Material<T>>,
 }
 
 impl<T: Float> Hittable<T> for Sphere<T> {
@@ -659,7 +680,7 @@ impl<T: Float> Hittable<T> for Sphere<T> {
         let outward_normal = (rec.p - self.center) / self.radius;
 
         rec.set_face_normal(&r, outward_normal);
-        // rec.material = self.material;
+        rec.material = self.material.clone();
 
         true
     }
@@ -711,6 +732,31 @@ impl<T: Float> Material<T> for MatLambertian<T> {
         *attenuation = self.albedo;
 
         true
+    }
+}
+
+struct MatMetal<T: Float> {
+    albedo: Color<T>,
+}
+
+impl<T: Float> Material<T> for MatMetal<T> {
+    fn scatter(
+        &self,
+        r_in: &Ray<T>,
+        rec: &mut HitRecord<T>,
+        attenuation: &mut Color<T>,
+        scattered: &mut Ray<T>,
+    ) -> bool {
+        let reflected = Vec3::reflect(r_in.direction, rec.normal);
+
+        *scattered = Ray {
+            origin: rec.p,
+            direction: reflected,
+        };
+
+        *attenuation = self.albedo;
+
+        scattered.direction.dot(&rec.normal) > T::zero()
     }
 }
 
@@ -798,7 +844,34 @@ fn main() {
         objects: Vec::new(),
     };
 
+    // Materials
+
+    let default_material = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 0.8,
+            y: 0.0,
+            z: 0.0,
+        },
+    });
+
+    let ground_material = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 0.8,
+            y: 0.8,
+            z: 0.0,
+        },
+    });
+
+    let metal_material = Rc::new(MatMetal {
+        albedo: Color {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        },
+    });
+
     // Center sphere
+
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
@@ -806,6 +879,29 @@ fn main() {
             z: -1.0,
         },
         radius: 0.5,
+        material: default_material.clone(),
+    }));
+
+    // Metal sphere to the left
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -1.0,
+            y: 0.0,
+            z: -1.0,
+        },
+        radius: 0.5,
+        material: metal_material.clone(),
+    }));
+
+    // Metal sphere to the right
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 1.0,
+            y: 0.0,
+            z: -1.0,
+        },
+        radius: 0.5,
+        material: metal_material.clone(),
     }));
 
     // Add some random spheres
@@ -828,6 +924,7 @@ fn main() {
             z: -1.0,
         },
         radius: 31.0,
+        material: ground_material.clone(),
     }));
 
     // Camera
@@ -870,7 +967,9 @@ fn main() {
 
                 let ray = cam.get_ray(u, v);
 
-                *p += ray_color(&ray, &world, max_depth, diffuse_renderer);
+                let mut rec = HitRecord::new(default_material.clone());
+
+                *p += ray_color(&ray, &mut rec, &world, max_depth);
             }
 
             i += 1;
