@@ -6,6 +6,11 @@ I'm learning [Rust](https://www.rust-lang.org/) and decided to tackle the classi
 
 Here are some renders, some are to document subtle bugs, and some are just to celebrate first successful renders with new features!
 
+
+![first hires reflective](renders/raytrace-1615001082.58049436s.first-hires-reflective.jpg)
+![fixed metal reflectance wooooo](renders/raytrace-1614999320.758953735s.fixed-metal-reflectance-wooooo.jpg)
+![first render with materials and attenuation](renders/raytrace-1614997695.127485347s.first-render-with-materials-and-attenuation.jpg)
+![first render with materials](renders/raytrace-1614997198.513695391s.first-render-with-materials.jpg)
 ![first-hires-render-with-clean-shadows](renders/raytrace-1614011092.297087907s.first-hires-render-with-clean-shadows.png)
 ![5-raycolor-multiplier](renders/raytrace-1614010469.65369906s.found-missing-0.5-raycolor-multiplier.png)
 ![shadow-acnestriations-caused-by-shadow-acne](renders/raytrace-1614010364.320713325s.shadow-acnestriations-caused-by-shadow-acne.png)
