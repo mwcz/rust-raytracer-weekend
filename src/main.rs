@@ -503,7 +503,7 @@ impl<T: Float + Debug> Ray<T> {
                 .scatter(&self, &*rec, &mut attenuation, &mut scattered);
 
             if is_scattered {
-                return scattered.color(rec, world, depth - 1);
+                return attenuation * scattered.color(rec, world, depth - 1);
             } else {
                 return Color::<T>::zero();
             }
