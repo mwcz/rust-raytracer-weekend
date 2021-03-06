@@ -782,10 +782,10 @@ fn main() {
     // Configuration
 
     let aspect_ratio = 16.0 / 10.0;
-    let width = 1200.0;
+    let width = 400.0;
     let height = width / aspect_ratio;
-    let samples_per_pixel: i32 = 400;
-    let max_depth = 100;
+    let samples_per_pixel: i32 = 100;
+    let max_depth = 10;
     let diffuse_renderer = &true_lambert;
 
     // RNG
