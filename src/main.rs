@@ -576,14 +576,14 @@ impl<T: Float + Debug> Ray<T> {
         let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
 
         let color = Vec3 {
-            x: T::one(),
-            y: T::one(),
-            z: T::one(),
+            x: T::from(252.0 / 255.0).unwrap(),
+            y: T::from(249.0 / 255.0).unwrap(),
+            z: T::from(254.0 / 255.0).unwrap(),
         } * (T::one() - t)
             + Vec3 {
-                x: T::from(0.5).unwrap(),
-                y: T::from(0.7).unwrap(),
-                z: T::from(1.0).unwrap(),
+                x: T::from(145.0 / 255.0).unwrap(),
+                y: T::from(187.0 / 255.0).unwrap(),
+                z: T::from(245.0 / 255.0).unwrap(),
             } * t;
 
         color
@@ -897,25 +897,25 @@ fn main() {
 
     let default_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.6,
-            y: 0.0,
-            z: 0.0,
+            x: 122.0 / 255.0,
+            y: 175.0 / 255.0,
+            z: 238.0 / 255.0,
         },
     });
 
     let ground_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.5,
-            y: 0.5,
-            z: 0.5,
+            x: 139.0 / 255.0,
+            y: 149.0 / 255.0,
+            z: 79.0 / 255.0,
         },
     });
 
     let metal_material = Rc::new(MatMetal {
         albedo: Color {
-            x: 1.0,
-            y: 1.0,
-            z: 1.0,
+            x: 200.0 / 255.0,
+            y: 200.0 / 255.0,
+            z: 220.0 / 255.0,
         },
     });
 
