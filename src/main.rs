@@ -95,8 +95,9 @@ impl<T: Float> Vec3<T> {
     }
 
     // Reflect vector v off normal n.
-    fn reflect(v: Vec3<T>, n: Vec3<T>) -> Vec3<T> {
-        n * v.dot(&n) * T::from(2.0).unwrap()
+    fn reflect(&self, n: Vec3<T>) -> Vec3<T> {
+        *self - n * T::from(2.0).unwrap() * self.dot(&n)
+        // n * v.dot(&n) * T::from(2.0).unwrap()
     }
 }
 
@@ -119,6 +120,7 @@ impl<T: Float> Vec3<T> {
 //  ADD  //
 ///////////
 
+// Vec3 * Vec3
 impl<T: Num + Copy> Add<Vec3<T>> for Vec3<T> {
     type Output = Self;
 
@@ -132,6 +134,7 @@ impl<T: Num + Copy> Add<Vec3<T>> for Vec3<T> {
     }
 }
 
+// Vec * Float
 impl<T: Num + Copy> Add<T> for Vec3<T> {
     type Output = Self;
 
@@ -145,10 +148,28 @@ impl<T: Num + Copy> Add<T> for Vec3<T> {
     }
 }
 
+// f64 * Vec
+impl Add<Vec3<f64>> for f64 {
+    type Output = Vec3<f64>;
+
+    #[inline]
+    fn add(self, other: Vec3<f64>) -> Vec3<f64> {
+        Vec3 {
+            x: self + other.x,
+            y: self + other.y,
+            z: self + other.z,
+        }
+    }
+}
+
+// I won't bother creating more Add impls for other numeric types, unless I start using this vector
+// lib for more things, or I learn how to use macros to generate the variations. :)
+
 //////////////////
 //  ADD ASSIGN  //
 //////////////////
 
+// Vec3 += Vec3
 impl<T: Num + Copy + AddAssign> AddAssign<Vec3<T>> for Vec3<T> {
     #[inline]
     fn add_assign(&mut self, other: Self) {
@@ -158,6 +179,7 @@ impl<T: Num + Copy + AddAssign> AddAssign<Vec3<T>> for Vec3<T> {
     }
 }
 
+// Vec3 += n
 impl<T: Num + Copy + AddAssign> AddAssign<T> for Vec3<T> {
     #[inline]
     fn add_assign(&mut self, other: T) {
@@ -171,6 +193,7 @@ impl<T: Num + Copy + AddAssign> AddAssign<T> for Vec3<T> {
 //  NEG  //
 ///////////
 
+// -Vec3
 impl<T: Num + Copy + Neg + Neg<Output = T>> Neg for Vec3<T> {
     type Output = Self;
 
@@ -188,6 +211,7 @@ impl<T: Num + Copy + Neg + Neg<Output = T>> Neg for Vec3<T> {
 //  SUB  //
 ///////////
 
+// Vec3 - Vec3
 impl<T: Num + Copy> Sub<Vec3<T>> for Vec3<T> {
     type Output = Self;
 
@@ -201,6 +225,7 @@ impl<T: Num + Copy> Sub<Vec3<T>> for Vec3<T> {
     }
 }
 
+// Vec3 - n
 impl<T: Num + Copy> Sub<T> for Vec3<T> {
     type Output = Self;
 
@@ -210,6 +235,20 @@ impl<T: Num + Copy> Sub<T> for Vec3<T> {
             x: self.x - other,
             y: self.y - other,
             z: self.z - other,
+        }
+    }
+}
+
+// f64 - Vec3
+impl Sub<Vec3<f64>> for f64 {
+    type Output = Vec3<f64>;
+
+    #[inline]
+    fn sub(self, other: Vec3<f64>) -> Vec3<f64> {
+        Vec3 {
+            x: self - other.x,
+            y: self - other.y,
+            z: self - other.z,
         }
     }
 }
@@ -262,6 +301,20 @@ impl<T: Num + Copy> Mul<T> for Vec3<T> {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
+        }
+    }
+}
+
+// f64 * Vec3
+impl Mul<Vec3<f64>> for f64 {
+    type Output = Vec3<f64>;
+
+    #[inline]
+    fn mul(self, other: Vec3<f64>) -> Vec3<f64> {
+        Vec3 {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
         }
     }
 }
@@ -743,7 +796,8 @@ impl<T: Float> Material<T> for MatMetal<T> {
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
-        let reflected = Vec3::reflect(r_in.direction.unit(), rec.normal);
+        // let reflected = Vec3::reflect(r_in.direction.unit(), rec.normal);
+        let reflected = r_in.direction.unit().reflect(rec.normal);
 
         *scattered = Ray {
             origin: rec.p,
