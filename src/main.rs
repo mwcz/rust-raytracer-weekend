@@ -743,7 +743,7 @@ impl<T: Float> Material<T> for MatMetal<T> {
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
-        let reflected = Vec3::reflect(r_in.direction, rec.normal);
+        let reflected = Vec3::reflect(r_in.direction.unit(), rec.normal);
 
         *scattered = Ray {
             origin: rec.p,
@@ -843,7 +843,7 @@ fn main() {
 
     let default_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.8,
+            x: 0.6,
             y: 0.0,
             z: 0.0,
         },
@@ -851,17 +851,17 @@ fn main() {
 
     let ground_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.8,
-            y: 0.8,
-            z: 0.0,
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
         },
     });
 
     let metal_material = Rc::new(MatMetal {
         albedo: Color {
             x: 1.0,
-            y: 0.0,
-            z: 0.0,
+            y: 1.0,
+            z: 1.0,
         },
     });
 
