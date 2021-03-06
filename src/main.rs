@@ -25,6 +25,7 @@ pub struct Vec3<T: Num + Copy> {
 type Point3<T> = Vec3<T>;
 type Color<T> = Vec3<T>;
 
+#[allow(dead_code)]
 impl<T: Float> Vec3<T> {
     /// Create a vector randomly seeded with values in the range [0..1)
     fn random() -> Vec3<T> {
@@ -591,6 +592,7 @@ struct HittableList<T: Float> {
     objects: Vec<Box<dyn Hittable<T>>>,
 }
 
+#[allow(dead_code)]
 impl<T: Float + Debug> HittableList<T> {
     fn clear(&mut self) {
         self.objects.clear();
