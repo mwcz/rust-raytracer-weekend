@@ -475,7 +475,8 @@ struct Ray<T: Float> {
 }
 
 #[allow(dead_code)]
-impl<T: Float> Ray<T> {
+impl<T: Float + Debug> Ray<T> {
+    #[inline]
     fn new() -> Ray<T> {
         Ray {
             origin: Point3::zero(),
@@ -486,6 +487,53 @@ impl<T: Float> Ray<T> {
     #[inline]
     fn at(&self, t: T) -> Vec3<T> {
         self.origin + self.direction * t
+    }
+
+    fn color(&self, rec: &mut HitRecord<T>, world: &HittableList<T>, depth: i32) -> Color<T> {
+        if depth <= 0 {
+            return Color::zero();
+        }
+
+        if world.hit(&self, T::from(0.001).unwrap(), T::infinity(), rec) {
+            let mut scattered = Ray::<T>::new();
+            let mut attenuation = Color::<T>::zero();
+
+            let is_scattered = rec
+                .material
+                .scatter(&self, &*rec, &mut attenuation, &mut scattered);
+
+            if is_scattered {
+                return scattered.color(rec, world, depth - 1);
+            } else {
+                return Color::<T>::zero();
+            }
+
+            // let target = diffuse_renderer(rec.p.clone(), rec.normal.clone());
+
+            // let new_ray = Ray {
+            //     origin: rec.p.clone(),
+            //     direction: target - rec.p.clone(),
+            // };
+            // return ray_color(&new_ray, rec, world, depth - 1, diffuse_renderer)
+            //     * T::from(0.5).unwrap();
+        }
+
+        let unit_direction = self.direction.unit();
+
+        let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
+
+        let color = Vec3 {
+            x: T::one(),
+            y: T::one(),
+            z: T::one(),
+        } * (T::one() - t)
+            + Vec3 {
+                x: T::from(0.5).unwrap(),
+                y: T::from(0.7).unwrap(),
+                z: T::from(1.0).unwrap(),
+            } * t;
+
+        color
     }
 }
 
@@ -514,58 +562,6 @@ impl<T: Float> Ray<T> {
 //         self.direction.z = source.direction.z;
 //     }
 // }
-
-fn ray_color<T: Float + Debug>(
-    r: &Ray<T>,
-    rec: &mut HitRecord<T>,
-    world: &HittableList<T>,
-    depth: i32,
-) -> Color<T> {
-    if depth <= 0 {
-        return Color::zero();
-    }
-
-    if world.hit(r, T::from(0.001).unwrap(), T::infinity(), rec) {
-        let mut scattered = Ray::<T>::new();
-        let mut attenuation = Color::<T>::zero();
-
-        let is_scattered = rec
-            .material
-            .scatter(&r, rec, &mut attenuation, &mut scattered);
-
-        if is_scattered {
-            return ray_color(&scattered, rec, world, depth - 1);
-        } else {
-            return Color::<T>::zero();
-        }
-
-        // let target = diffuse_renderer(rec.p.clone(), rec.normal.clone());
-
-        // let new_ray = Ray {
-        //     origin: rec.p.clone(),
-        //     direction: target - rec.p.clone(),
-        // };
-        // return ray_color(&new_ray, rec, world, depth - 1, diffuse_renderer)
-        //     * T::from(0.5).unwrap();
-    }
-
-    let unit_direction = r.direction.unit();
-
-    let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
-
-    let color = Vec3 {
-        x: T::one(),
-        y: T::one(),
-        z: T::one(),
-    } * (T::one() - t)
-        + Vec3 {
-            x: T::from(0.5).unwrap(),
-            y: T::from(0.7).unwrap(),
-            z: T::from(1.0).unwrap(),
-        } * t;
-
-    color
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                            HITTABLES                                           //
@@ -649,7 +645,7 @@ struct Sphere<T: Float> {
     material: Rc<dyn Material<T>>,
 }
 
-impl<T: Float> Hittable<T> for Sphere<T> {
+impl<T: Float + Debug> Hittable<T> for Sphere<T> {
     fn hit(&self, r: &Ray<T>, t_min: T, t_max: T, rec: &mut HitRecord<T>) -> bool {
         let oc = r.origin - self.center;
         let a = r.direction.length_squared();
@@ -694,7 +690,7 @@ trait Material<T: Float> {
     fn scatter(
         &self,
         r_in: &Ray<T>,
-        rec: &mut HitRecord<T>,
+        rec: &HitRecord<T>,
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool;
@@ -708,7 +704,7 @@ impl<T: Float> Material<T> for MatLambertian<T> {
     fn scatter(
         &self,
         r_in: &Ray<T>,
-        rec: &mut HitRecord<T>,
+        rec: &HitRecord<T>,
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
@@ -743,7 +739,7 @@ impl<T: Float> Material<T> for MatMetal<T> {
     fn scatter(
         &self,
         r_in: &Ray<T>,
-        rec: &mut HitRecord<T>,
+        rec: &HitRecord<T>,
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
@@ -832,7 +828,6 @@ fn main() {
     let height = width / aspect_ratio;
     let samples_per_pixel: i32 = 100;
     let max_depth = 10;
-    let diffuse_renderer = &true_lambert;
 
     // RNG
 
@@ -969,7 +964,7 @@ fn main() {
 
                 let mut rec = HitRecord::new(default_material.clone());
 
-                *p += ray_color(&ray, &mut rec, &world, max_depth);
+                *p += ray.color(&mut rec, &world, max_depth);
             }
 
             i += 1;
