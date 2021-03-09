@@ -1069,7 +1069,7 @@ fn main() {
             y: -0.174,
             z: 0.7,
         },
-        radius: -0.11,
+        radius: 0.11,
         material: glass_material.clone(),
     }));
 
