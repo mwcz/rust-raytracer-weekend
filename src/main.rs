@@ -11,6 +11,15 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssi
 use std::rc::Rc;
 use std::time;
 
+fn random_float<T: Float>() -> T {
+    let mut rng = rand::thread_rng();
+    T::from(rng.gen::<f64>()).unwrap()
+}
+
+fn random_float_in_range<T: Float>(min: T, max: T) -> T {
+    min + (max - min) * random_float()
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              VEC3                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,33 +45,37 @@ impl<T: Float> Vec3<T> {
         }
     }
 
+    fn one() -> Vec3<T> {
+        Vec3 {
+            x: T::one(),
+            y: T::one(),
+            z: T::one(),
+        }
+    }
+
     /// Create a vector randomly seeded with values in the range [0..1)
     #[allow(dead_code)]
     fn random() -> Vec3<T> {
-        let mut rng = rand::thread_rng();
-
         Vec3 {
-            x: T::from(rng.gen::<f64>()).unwrap(),
-            y: T::from(rng.gen::<f64>()).unwrap(),
-            z: T::from(rng.gen::<f64>()).unwrap(),
+            x: random_float(),
+            y: random_float(),
+            z: random_float(),
         }
     }
 
     /// Create a vector randomly seeded with values in the given range.
-    fn random_range(min: f64, max: f64) -> Vec3<T> {
-        let mut rng = rand::thread_rng();
-
+    fn random_range(min: T, max: T) -> Vec3<T> {
         Vec3 {
-            x: T::from(rng.gen_range(min..max)).unwrap(),
-            y: T::from(rng.gen_range(min..max)).unwrap(),
-            z: T::from(rng.gen_range(min..max)).unwrap(),
+            x: random_float_in_range(min, max),
+            y: random_float_in_range(min, max),
+            z: random_float_in_range(min, max),
         }
     }
 
     /// Create a vector randomly seeded with a point inside the unit sphere.
     fn random_in_unit_sphere() -> Vec3<T> {
         loop {
-            let p = Vec3::random_range(-1.0, 1.0);
+            let p = Vec3::random_range(-T::one(), T::one());
 
             if p.length_squared() >= T::one() {
                 continue;
@@ -94,10 +107,20 @@ impl<T: Float> Vec3<T> {
         self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 
-    // Reflect vector v off normal n.
+    /// Reflect vector off normal n.
     fn reflect(&self, n: Vec3<T>) -> Vec3<T> {
         *self - n * T::from(2.0).unwrap() * self.dot(&n)
         // n * v.dot(&n) * T::from(2.0).unwrap()
+    }
+
+    /// Refract vector entering surface with normal n.
+    fn refract(&self, n: Vec3<T>, etai_over_etat: T) -> Vec3<T> {
+        let dot_normal = (self * -T::one()).dot(&n);
+        let cos_theta = dot_normal.min(T::one());
+        let r_out_perp = (*self + n * cos_theta) * etai_over_etat;
+        let r_out_parallel = n * -(-r_out_perp.length_squared() + T::one()).sqrt();
+
+        r_out_parallel + r_out_perp
     }
 }
 
@@ -298,6 +321,19 @@ impl<T: Num + Copy> Mul<T> for Vec3<T> {
     #[inline]
     fn mul(self, other: T) -> Self {
         Self {
+            x: self.x * other,
+            y: self.y * other,
+            z: self.z * other,
+        }
+    }
+}
+
+impl<'a, T: Num + Copy> Mul<T> for &'a Vec3<T> {
+    type Output = Vec3<T>;
+
+    #[inline]
+    fn mul(self, other: T) -> Vec3<T> {
+        Vec3::<T> {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
@@ -576,14 +612,14 @@ impl<T: Float + Debug> Ray<T> {
         let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
 
         let color = Vec3 {
-            x: T::from(252.0 / 255.0).unwrap(),
-            y: T::from(249.0 / 255.0).unwrap(),
+            x: T::from(248.0 / 255.0).unwrap(),
+            y: T::from(245.0 / 255.0).unwrap(),
             z: T::from(254.0 / 255.0).unwrap(),
         } * (T::one() - t)
             + Vec3 {
-                x: T::from(145.0 / 255.0).unwrap(),
-                y: T::from(187.0 / 255.0).unwrap(),
-                z: T::from(245.0 / 255.0).unwrap(),
+                x: T::from(139.0 / 255.0).unwrap(),
+                y: T::from(179.0 / 255.0).unwrap(),
+                z: T::from(237.0 / 255.0).unwrap(),
             } * t;
 
         color
@@ -761,13 +797,19 @@ impl<T: Float> Material<T> for MatLambertian<T> {
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
-        let mut scatter_direction = rec.normal + Vec3::<T>::random_unit_vector();
+        let scatter_direction = rec.normal + Vec3::<T>::random_unit_vector();
 
-        // avoid scattering when near zero
-        if scatter_direction.near_zero() {
-            // scatter_direction.clone_from(&rec.normal);
-            scatter_direction = rec.normal;
-        }
+        let scatter_direction = if scatter_direction.near_zero() {
+            rec.normal
+        } else {
+            scatter_direction
+        };
+
+        // // avoid scattering when near zero
+        // if scatter_direction.near_zero() {
+        //     // scatter_direction.clone_from(&rec.normal);
+        //     scatter_direction = rec.normal;
+        // }
 
         let scatter_ray = Ray {
             origin: rec.p,
@@ -786,6 +828,7 @@ impl<T: Float> Material<T> for MatLambertian<T> {
 
 struct MatMetal<T: Float> {
     albedo: Color<T>,
+    fuzz: T,
 }
 
 impl<T: Float> Material<T> for MatMetal<T> {
@@ -796,17 +839,73 @@ impl<T: Float> Material<T> for MatMetal<T> {
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
     ) -> bool {
-        // let reflected = Vec3::reflect(r_in.direction.unit(), rec.normal);
         let reflected = r_in.direction.unit().reflect(rec.normal);
 
         *scattered = Ray {
             origin: rec.p,
-            direction: reflected,
+            direction: reflected + Vec3::<T>::random_in_unit_sphere() * self.fuzz,
         };
 
         *attenuation = self.albedo;
 
         scattered.direction.dot(&rec.normal) > T::zero()
+    }
+}
+
+struct MatDielectric<T: Float> {
+    ir: T,
+    albedo: Color<T>,
+}
+
+trait Dielectric<T> {
+    fn reflectance(&self, cosine: T, ref_idx: T) -> T;
+}
+
+impl<T: Float> Material<T> for MatDielectric<T> {
+    fn scatter(
+        &self,
+        r_in: &Ray<T>,
+        rec: &HitRecord<T>,
+        attenuation: &mut Color<T>,
+        scattered: &mut Ray<T>,
+    ) -> bool {
+        *attenuation = self.albedo;
+
+        let refraction_ratio = if rec.front_face {
+            T::one() / self.ir
+        } else {
+            self.ir
+        };
+
+        let unit_direction = r_in.direction.unit();
+
+        let cos_theta = -unit_direction.dot(&rec.normal).min(T::one());
+        let sin_theta = (T::one() - cos_theta * cos_theta).sqrt();
+
+        let cannot_refract = refraction_ratio * sin_theta > T::one();
+        let should_reflect = self.reflectance(cos_theta, refraction_ratio) > random_float();
+
+        let direction = if cannot_refract || should_reflect {
+            unit_direction.reflect(rec.normal)
+        } else {
+            unit_direction.refract(rec.normal, refraction_ratio)
+        };
+
+        *scattered = Ray {
+            origin: rec.p,
+            direction,
+        };
+
+        true
+    }
+}
+
+impl<T: Float> Dielectric<T> for MatDielectric<T> {
+    fn reflectance(&self, cosine: T, ref_idx: T) -> T {
+        let r0 = (T::one() - ref_idx) / (T::one() + ref_idx);
+        let r0 = r0 * r0;
+
+        r0 + (T::one() - r0) * (T::one() - cosine).powi(5)
     }
 }
 
@@ -878,14 +977,10 @@ fn main() {
     // Configuration
 
     let aspect_ratio = 16.0 / 10.0;
-    let width = 400.0;
+    let width = 800.0;
     let height = width / aspect_ratio;
-    let samples_per_pixel: i32 = 100;
-    let max_depth = 10;
-
-    // RNG
-
-    let mut rng = rand::thread_rng();
+    let samples_per_pixel: i32 = 300;
+    let max_depth = 100;
 
     // World
 
@@ -905,9 +1000,9 @@ fn main() {
 
     let ground_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 139.0 / 255.0,
+            x: 137.0 / 255.0,
             y: 149.0 / 255.0,
-            z: 79.0 / 255.0,
+            z: 143.0 / 255.0,
         },
     });
 
@@ -917,64 +1012,134 @@ fn main() {
             y: 200.0 / 255.0,
             z: 220.0 / 255.0,
         },
+        fuzz: 0.1,
     });
 
-    // Center sphere
+    let metal_red_material = Rc::new(MatMetal {
+        albedo: Color {
+            x: 208.0 / 255.0,
+            y: 86.0 / 255.0,
+            z: 95.0 / 255.0,
+        },
+        fuzz: 0.7,
+    });
 
+    let glass_material = Rc::new(MatDielectric {
+        ir: 1.5,
+        albedo: Color::one(),
+    });
+
+    // Left sphere
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -1.85,
+            y: 0.45,
+            z: -3.0,
+        },
+        radius: 0.9,
+        material: metal_material.clone(),
+    }));
+
+    // Center sphere
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
-            y: 0.0,
-            z: -1.0,
+            y: 0.45,
+            z: -3.3,
         },
-        radius: 0.5,
+        radius: 0.9,
         material: default_material.clone(),
     }));
 
-    // Metal sphere to the left
+    // Right sphere
     world.add(Box::new(Sphere {
         center: Point3 {
-            x: -1.0,
-            y: 0.0,
-            z: -1.0,
+            x: 1.85,
+            y: 0.45,
+            z: -3.0,
         },
-        radius: 0.5,
-        material: metal_material.clone(),
+        radius: 0.9,
+        material: metal_red_material.clone(),
     }));
 
-    // Metal sphere to the right
+    // Glass sphere
     world.add(Box::new(Sphere {
         center: Point3 {
-            x: 1.0,
-            y: 0.0,
-            z: -1.0,
+            x: 0.0,
+            y: -0.174,
+            z: 0.7,
         },
-        radius: 0.5,
-        material: metal_material.clone(),
+        radius: -0.11,
+        material: glass_material.clone(),
     }));
-
-    // Add some random spheres
-    // for i in 0..100 {
-    //     world.add(Box::new(Sphere {
-    //         center: Point3 {
-    //             x: 5.0 * (rng.gen::<f64>() - 0.5),
-    //             y: 5.0 * (rng.gen::<f64>() - 0.5),
-    //             z: 2.0 * (rng.gen::<f64>() - 1.0),
-    //         },
-    //         radius: 0.2,
-    //     }));
-    // }
 
     // "World" sphere
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
-            y: -31.45,
-            z: -1.0,
+            y: -1000.45,
+            z: -1.2,
         },
-        radius: 31.0,
+        radius: 1000.0,
         material: ground_material.clone(),
     }));
+
+    //     // Add some random colored metal spheres
+    //     for _ in 0..3 {
+    //         world.add(Box::new(Sphere {
+    //             center: Point3 {
+    //                 x: random_float_in_range(-4.0, 4.0),
+    //                 y: random_float_in_range(-4.0, 4.0),
+    //                 z: random_float_in_range(-4.0, 4.0),
+    //             },
+    //             radius: random_float_in_range(0.05, 2.0),
+    //             material: Rc::new(MatMetal {
+    //                 albedo: Color {
+    //                     x: random_float(),
+    //                     y: random_float(),
+    //                     z: random_float(),
+    //                 },
+    //             }),
+    //         }));
+    //     }
+
+    //     // Add some random mirror metal spheres
+    //     for _ in 0..3 {
+    //         world.add(Box::new(Sphere {
+    //             center: Point3 {
+    //                 x: random_float_in_range(-4.0, 4.0),
+    //                 y: random_float_in_range(-4.0, 4.0),
+    //                 z: random_float_in_range(-4.0, 4.0),
+    //             },
+    //             radius: random_float_in_range(0.05, 2.0),
+    //             material: Rc::new(MatMetal {
+    //                 albedo: Color {
+    //                     x: random_float(),
+    //                     y: random_float(),
+    //                     z: random_float(),
+    //                 },
+    //             }),
+    //         }));
+    //     }
+
+    //     // Add some random colored matte spheres
+    //     for _ in 0..3 {
+    //         world.add(Box::new(Sphere {
+    //             center: Point3 {
+    //                 x: random_float_in_range(-4.0, 4.0),
+    //                 y: random_float_in_range(-4.0, 4.0),
+    //                 z: random_float_in_range(-4.0, 4.0),
+    //             },
+    //             radius: random_float_in_range(0.05, 2.0),
+    //             material: Rc::new(MatLambertian {
+    //                 albedo: Color {
+    //                     x: random_float(),
+    //                     y: random_float(),
+    //                     z: random_float(),
+    //                 },
+    //             }),
+    //         }));
+    //     }
 
     // Camera
 
@@ -1000,13 +1165,13 @@ fn main() {
             for _ in 0..samples_per_pixel {
                 // don't use RNG if there's only one sample per pixel
                 let u_rand = if samples_per_pixel > 1 {
-                    rng.gen::<f64>()
+                    random_float()
                 } else {
                     1.0
                 };
 
                 let v_rand = if samples_per_pixel > 1 {
-                    rng.gen::<f64>()
+                    random_float()
                 } else {
                     1.0
                 };
