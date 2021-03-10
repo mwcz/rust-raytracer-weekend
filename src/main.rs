@@ -792,7 +792,7 @@ struct MatLambertian<T: Float> {
 impl<T: Float> Material<T> for MatLambertian<T> {
     fn scatter(
         &self,
-        r_in: &Ray<T>,
+        _r_in: &Ray<T>,
         rec: &HitRecord<T>,
         attenuation: &mut Color<T>,
         scattered: &mut Ray<T>,
@@ -998,11 +998,19 @@ fn main() {
         },
     });
 
+    let black_material = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 10.0 / 255.0,
+            y: 9.0 / 255.0,
+            z: 8.0 / 255.0,
+        },
+    });
+
     let ground_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 137.0 / 255.0,
-            y: 149.0 / 255.0,
-            z: 143.0 / 255.0,
+            x: 72.0 / 255.0,
+            y: 96.0 / 255.0,
+            z: 52.0 / 255.0,
         },
     });
 
@@ -1015,63 +1023,99 @@ fn main() {
         fuzz: 0.1,
     });
 
+    let mirror_material = Rc::new(MatMetal {
+        albedo: Color {
+            x: 253.0 / 255.0,
+            y: 253.0 / 255.0,
+            z: 255.0 / 255.0,
+        },
+        fuzz: 0.0,
+    });
+
     let metal_red_material = Rc::new(MatMetal {
         albedo: Color {
             x: 208.0 / 255.0,
-            y: 86.0 / 255.0,
-            z: 95.0 / 255.0,
+            y: 66.0 / 255.0,
+            z: 70.0 / 255.0,
         },
-        fuzz: 0.7,
+        fuzz: 0.6,
     });
 
-    let glass_material = Rc::new(MatDielectric {
-        ir: 1.5,
-        albedo: Color::one(),
-    });
-
-    // Left sphere
+    // Sphere 1
     world.add(Box::new(Sphere {
         center: Point3 {
-            x: -1.85,
+            x: -3.163,
             y: 0.45,
-            z: -3.0,
+            z: -2.705 - 0.5,
         },
         radius: 0.9,
         material: metal_material.clone(),
     }));
 
-    // Center sphere
+    // Sphere 2
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -1.84,
+            y: 0.45,
+            z: -4.028 - 0.5,
+        },
+        radius: 0.9,
+        material: black_material.clone(),
+    }));
+
+    // Sphere 3 (center)
     world.add(Box::new(Sphere {
         center: Point3 {
             x: 0.0,
             y: 0.45,
-            z: -3.3,
+            z: -4.3 - 0.5,
         },
         radius: 0.9,
         material: default_material.clone(),
     }));
 
-    // Right sphere
+    // Sphere 4
     world.add(Box::new(Sphere {
         center: Point3 {
-            x: 1.85,
+            x: 1.84,
             y: 0.45,
-            z: -3.0,
+            z: -4.028 - 0.5,
+        },
+        radius: 0.9,
+        material: mirror_material.clone(),
+    }));
+
+    // Sphere 5
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 3.163,
+            y: 0.45,
+            z: -2.705 - 0.5,
         },
         radius: 0.9,
         material: metal_red_material.clone(),
     }));
 
-    // Glass sphere
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: 0.0,
-            y: -0.174,
-            z: 0.7,
-        },
-        radius: 0.11,
-        material: glass_material.clone(),
-    }));
+    for s in 0..5 {
+        // Glass sphere
+        let s = s as f64;
+        world.add(Box::new(Sphere {
+            center: Point3 {
+                x: -0.7 + s * 0.35,
+                y: -0.28,
+                z: -1.0,
+            },
+            radius: 0.15,
+            material: Rc::new(MatDielectric {
+                ir: 1.5,
+                albedo: Color {
+                    x: random_float(),
+                    y: random_float(),
+                    z: random_float(),
+                },
+            }),
+        }));
+    }
 
     // "World" sphere
     world.add(Box::new(Sphere {
