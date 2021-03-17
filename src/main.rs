@@ -3,6 +3,7 @@ use num::clamp;
 use num::traits::{Float, Num};
 use rand::prelude::*;
 use std::env;
+
 use std::fmt;
 use std::fmt::Debug;
 use std::fs::File;
@@ -98,6 +99,24 @@ impl<T: Float> Vec3<T> {
             in_unit_sphere
         } else {
             -in_unit_sphere
+        }
+    }
+
+    /// Create a vector random seeded within a unit disk.  To be used as an origin point for
+    /// casting rays from a virtual film plane.
+    fn random_in_unit_disk() -> Vec3<T> {
+        loop {
+            let p = Vec3 {
+                x: random_float_in_range(-T::one(), T::one()),
+                y: random_float_in_range(-T::one(), T::one()),
+                z: T::zero(),
+            };
+
+            if p.length_squared() >= T::one() {
+                continue;
+            }
+
+            return p;
         }
     }
 
@@ -492,66 +511,135 @@ impl<T: Display + Num + Copy> Display for Vec3<T> {
 #[allow(dead_code)]
 struct Camera<T: Float + Debug> {
     aspect_ratio: T,
-    viewport_height: T,
-    viewport_width: T,
-    focal_length: T,
-
     origin: Point3<T>,
     lower_left_corner: Point3<T>,
     horizontal: Vec3<T>,
     vertical: Vec3<T>,
+    u: Vec3<T>,
+    v: Vec3<T>,
+    w: Vec3<T>,
+    lens_radius: T,
 }
 
 impl<T: Float + Debug> Camera<T> {
     /// Create a new Camera.
-    fn new(aspect_ratio: T, viewport_height: T) -> Camera<T> {
+    fn new(
+        lookfrom: Point3<T>,
+        lookat: Point3<T>,
+        vup: Vec3<T>,
+        vfov: T,
+        aspect_ratio: T,
+        aperture: T,
+        focus_dist: T,
+    ) -> Camera<T> {
+        let two = T::from(2.0).unwrap();
+
+        let theta = vfov.to_radians();
+        let theta_half = theta / two;
+        let h = theta_half.tan();
+        let viewport_height = h * two;
         let viewport_width = aspect_ratio * viewport_height;
-        let focal_length = T::one();
 
-        let origin = Point3::zero();
+        let w = (lookfrom - lookat).unit();
+        let u = vup.cross(&w).unit();
+        let v = w.cross(&u);
 
-        let horizontal = Point3 {
-            x: viewport_width,
-            y: T::zero(),
-            z: T::zero(),
-        };
-
-        let vertical = Point3 {
-            x: T::zero(),
-            y: viewport_height,
-            z: T::zero(),
-        };
-
-        let lower_left_corner = origin
-            - horizontal / T::from(2.0).unwrap()
-            - vertical / T::from(2.0).unwrap()
-            - Vec3 {
-                x: T::zero(),
-                y: T::zero(),
-                z: focal_length,
-            };
+        let origin = lookfrom;
+        let horizontal = u * viewport_width * focus_dist;
+        let vertical = v * viewport_height * focus_dist;
+        let lower_left_corner = origin - horizontal / two - vertical / two - w * focus_dist;
+        let lens_radius = aperture / two;
 
         Camera {
             aspect_ratio,
-            viewport_height,
-            viewport_width,
-            focal_length,
             origin,
             horizontal,
             vertical,
             lower_left_corner,
+            u,
+            v,
+            w,
+            lens_radius,
         }
     }
 
     /// Get a ray at (u,v).
-    fn get_ray(&self, u: T, v: T) -> Ray<T> {
+    fn get_ray(&self, s: T, t: T) -> Ray<T> {
+        let rd = Vec3::<T>::random_in_unit_disk() * self.lens_radius;
+        let offset = self.u * rd.x + self.v * rd.y;
+
         Ray {
-            origin: self.origin,
-            direction: self.lower_left_corner + self.horizontal * u + self.vertical * v
-                - self.origin,
+            origin: self.origin + offset,
+            direction: self.lower_left_corner + self.horizontal * s + self.vertical * t
+                - self.origin
+                - offset,
         }
     }
 }
+
+// #[allow(dead_code)]
+// struct Camera<T: Float + Debug> {
+//     aspect_ratio: T,
+//     viewport_height: T,
+//     viewport_width: T,
+//     focal_length: T,
+
+//     origin: Point3<T>,
+//     lower_left_corner: Point3<T>,
+//     horizontal: Vec3<T>,
+//     vertical: Vec3<T>,
+// }
+
+// impl<T: Float + Debug> Camera<T> {
+//     /// Create a new Camera.
+//     fn new(aspect_ratio: T, viewport_height: T) -> Camera<T> {
+//         let viewport_width = aspect_ratio * viewport_height;
+//         let focal_length = T::one();
+
+//         let origin = Point3::zero();
+
+//         let horizontal = Point3 {
+//             x: viewport_width,
+//             y: T::zero(),
+//             z: T::zero(),
+//         };
+
+//         let vertical = Point3 {
+//             x: T::zero(),
+//             y: viewport_height,
+//             z: T::zero(),
+//         };
+
+//         let lower_left_corner = origin
+//             - horizontal / T::from(2.0).unwrap()
+//             - vertical / T::from(2.0).unwrap()
+//             - Vec3 {
+//                 x: T::zero(),
+//                 y: T::zero(),
+//                 z: focal_length,
+//             };
+
+//         Camera {
+//             aspect_ratio,
+//             viewport_height,
+//             viewport_width,
+//             focal_length,
+//             origin,
+//             horizontal,
+//             vertical,
+//             lower_left_corner,
+//         }
+//     }
+
+//     /// Get a ray at (u,v).
+//     fn get_ray(&self, u: T, v: T) -> Ray<T> {
+//         Ray {
+//             origin: self.origin,
+//             direction: self.lower_left_corner + self.horizontal * u + self.vertical * v
+//                 - self.origin,
+//         }
+//     }
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              RAY                                               //
@@ -928,6 +1016,150 @@ fn naive_hemisphere<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                          RANDOM SCENE                                          //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn random_scene() -> HittableList<f64> {
+    let mut world = HittableList::<f64> {
+        objects: Vec::new(),
+    };
+
+    // Ground
+
+    let ground_material = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+        },
+    });
+
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: -1000.0,
+            z: 0.0,
+        },
+        radius: 1000.0,
+        material: ground_material.clone(),
+    }));
+
+    // Sphere 1
+
+    let material1 = Rc::new(MatDielectric {
+        albedo: Color {
+            x: 0.9,
+            y: 0.9,
+            z: 0.9,
+        },
+        ir: 1.5,
+    });
+
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        radius: 1.0,
+        material: material1.clone(),
+    }));
+
+    // Sphere 2
+
+    let material2 = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 0.4,
+            y: 0.2,
+            z: 0.1,
+        },
+    });
+
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -4.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        radius: 1.0,
+        material: material2.clone(),
+    }));
+
+    // Sphere 3
+
+    let material3 = Rc::new(MatMetal {
+        albedo: Color {
+            x: 0.7,
+            y: 0.6,
+            z: 0.5,
+        },
+        fuzz: 0.0,
+    });
+
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 4.0,
+            y: 1.0,
+            z: 0.0,
+        },
+        radius: 1.0,
+        material: material3.clone(),
+    }));
+
+    let boundary = Point3 {
+        x: 4.0,
+        y: 0.2,
+        z: 0.0,
+    };
+
+    for a in -11..11 {
+        for b in -11..11 {
+            let choose_mat: f64 = random_float();
+
+            let center = Point3 {
+                x: (a as f64) + 0.9 * random_float::<f64>(),
+                y: 0.2,
+                z: (b as f64) + 0.9 * random_float::<f64>(),
+            };
+
+            if (center - boundary).length() > 0.9 {
+                if choose_mat < 0.33 {
+                    let albedo = Color::random() * Color::random();
+                    let sphere_material = Rc::new(MatLambertian { albedo });
+
+                    world.add(Box::new(Sphere {
+                        center,
+                        radius: 0.2,
+                        material: sphere_material.clone(),
+                    }));
+                } else if choose_mat < 0.66 {
+                    let albedo = Color::random_range(0.5, 1.0);
+                    let fuzz = random_float_in_range(0.0, 0.5);
+                    let sphere_material = Rc::new(MatMetal { albedo, fuzz });
+
+                    world.add(Box::new(Sphere {
+                        center,
+                        radius: 0.2,
+                        material: sphere_material.clone(),
+                    }));
+                } else {
+                    let albedo = Color::random_range(0.8, 1.0);
+                    let sphere_material = Rc::new(MatDielectric { albedo, ir: 1.5 });
+
+                    world.add(Box::new(Sphere {
+                        center,
+                        radius: 0.2,
+                        material: sphere_material.clone(),
+                    }));
+                }
+            }
+        }
+    }
+
+    world
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              PPM                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -976,17 +1208,19 @@ fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32
 fn main() {
     // Configuration
 
-    let aspect_ratio = 16.0 / 10.0;
-    let width = 800.0;
+    let aspect_ratio = 3.0 / 2.0;
+    let width = 12000.0;
     let height = width / aspect_ratio;
-    let samples_per_pixel: i32 = 300;
+    let samples_per_pixel: i32 = 500;
     let max_depth = 100;
 
     // World
 
-    let mut world: HittableList<f64> = HittableList {
-        objects: Vec::new(),
-    };
+    // let mut world: HittableList<f64> = HittableList {
+    //     objects: Vec::new(),
+    // };
+
+    let world = random_scene();
 
     // Materials
 
@@ -1041,154 +1275,239 @@ fn main() {
         fuzz: 0.6,
     });
 
-    // Sphere 1
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: -3.163,
-            y: 0.45,
-            z: -2.705 - 0.5,
+    let glass_material = Rc::new(MatDielectric {
+        albedo: Color {
+            x: 0.99,
+            y: 0.99,
+            z: 0.99,
         },
-        radius: 0.9,
-        material: metal_material.clone(),
-    }));
+        ir: 1.5,
+    });
 
-    // Sphere 2
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: -1.84,
-            y: 0.45,
-            z: -4.028 - 0.5,
-        },
-        radius: 0.9,
-        material: black_material.clone(),
-    }));
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 0.0,
+    //         y: 0.0,
+    //         z: -1.0,
+    //     },
+    //     radius: 0.5,
+    //     material: metal_red_material.clone(),
+    // }));
 
-    // Sphere 3 (center)
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: 0.0,
-            y: 0.45,
-            z: -4.3 - 0.5,
-        },
-        radius: 0.9,
-        material: default_material.clone(),
-    }));
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: -1.0,
+    //         y: 0.0,
+    //         z: -1.0,
+    //     },
+    //     radius: 0.5,
+    //     material: default_material.clone(),
+    // }));
 
-    // Sphere 4
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: 1.84,
-            y: 0.45,
-            z: -4.028 - 0.5,
-        },
-        radius: 0.9,
-        material: mirror_material.clone(),
-    }));
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: -1.0,
+    //         y: 0.0,
+    //         z: -1.0,
+    //     },
+    //     radius: -0.45,
+    //     material: glass_material.clone(),
+    // }));
 
-    // Sphere 5
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: 3.163,
-            y: 0.45,
-            z: -2.705 - 0.5,
-        },
-        radius: 0.9,
-        material: metal_red_material.clone(),
-    }));
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 1.0,
+    //         y: 0.0,
+    //         z: -1.0,
+    //     },
+    //     radius: 0.5,
+    //     material: metal_material.clone(),
+    // }));
 
-    for s in 0..5 {
-        // Glass sphere
-        let s = s as f64;
-        world.add(Box::new(Sphere {
-            center: Point3 {
-                x: -0.7 + s * 0.35,
-                y: -0.28,
-                z: -1.0,
-            },
-            radius: 0.15,
-            material: Rc::new(MatDielectric {
-                ir: 1.5,
-                albedo: Color {
-                    x: random_float(),
-                    y: random_float(),
-                    z: random_float(),
-                },
-            }),
-        }));
-    }
+    // // Ground
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 0.0,
+    //         y: -100.5,
+    //         z: -1.0,
+    //     },
+    //     radius: 100.0,
+    //     material: ground_material.clone(),
+    // }));
 
-    // "World" sphere
-    world.add(Box::new(Sphere {
-        center: Point3 {
-            x: 0.0,
-            y: -1000.45,
-            z: -1.2,
-        },
-        radius: 1000.0,
-        material: ground_material.clone(),
-    }));
+    // // Sphere 1
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: -3.163,
+    //         y: 0.45,
+    //         z: -2.705 - 0.5,
+    //     },
+    //     radius: 0.9,
+    //     material: metal_material.clone(),
+    // }));
 
-    //     // Add some random colored metal spheres
-    //     for _ in 0..3 {
-    //         world.add(Box::new(Sphere {
-    //             center: Point3 {
-    //                 x: random_float_in_range(-4.0, 4.0),
-    //                 y: random_float_in_range(-4.0, 4.0),
-    //                 z: random_float_in_range(-4.0, 4.0),
+    // // Sphere 2
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: -1.84,
+    //         y: 0.45,
+    //         z: -4.028 - 0.5,
+    //     },
+    //     radius: 0.9,
+    //     material: black_material.clone(),
+    // }));
+
+    // // Sphere 3 (center)
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 0.0,
+    //         y: 0.45,
+    //         z: -4.3 - 0.5,
+    //     },
+    //     radius: 0.9,
+    //     material: default_material.clone(),
+    // }));
+
+    // // Sphere 4
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 1.84,
+    //         y: 0.45,
+    //         z: -4.028 - 0.5,
+    //     },
+    //     radius: 0.9,
+    //     material: mirror_material.clone(),
+    // }));
+
+    // // Sphere 5
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 3.163,
+    //         y: 0.45,
+    //         z: -2.705 - 0.5,
+    //     },
+    //     radius: 0.9,
+    //     material: metal_red_material.clone(),
+    // }));
+
+    // for s in 0..5 {
+    //     // Glass sphere
+    //     let s = s as f64;
+    //     world.add(Box::new(Sphere {
+    //         center: Point3 {
+    //             x: -0.7 + s * 0.35,
+    //             y: -0.28,
+    //             z: -1.0,
+    //         },
+    //         radius: 0.15,
+    //         material: Rc::new(MatDielectric {
+    //             ir: 1.5,
+    //             albedo: Color {
+    //                 x: random_float(),
+    //                 y: random_float(),
+    //                 z: random_float(),
     //             },
-    //             radius: random_float_in_range(0.05, 2.0),
-    //             material: Rc::new(MatMetal {
-    //                 albedo: Color {
-    //                     x: random_float(),
-    //                     y: random_float(),
-    //                     z: random_float(),
-    //                 },
-    //             }),
-    //         }));
-    //     }
+    //         }),
+    //     }));
+    // }
 
-    //     // Add some random mirror metal spheres
-    //     for _ in 0..3 {
-    //         world.add(Box::new(Sphere {
-    //             center: Point3 {
-    //                 x: random_float_in_range(-4.0, 4.0),
-    //                 y: random_float_in_range(-4.0, 4.0),
-    //                 z: random_float_in_range(-4.0, 4.0),
-    //             },
-    //             radius: random_float_in_range(0.05, 2.0),
-    //             material: Rc::new(MatMetal {
-    //                 albedo: Color {
-    //                     x: random_float(),
-    //                     y: random_float(),
-    //                     z: random_float(),
-    //                 },
-    //             }),
-    //         }));
-    //     }
+    // // "World" sphere
+    // world.add(Box::new(Sphere {
+    //     center: Point3 {
+    //         x: 0.0,
+    //         y: -1000.45,
+    //         z: -1.2,
+    //     },
+    //     radius: 1000.0,
+    //     material: ground_material.clone(),
+    // }));
 
-    //     // Add some random colored matte spheres
-    //     for _ in 0..3 {
-    //         world.add(Box::new(Sphere {
-    //             center: Point3 {
-    //                 x: random_float_in_range(-4.0, 4.0),
-    //                 y: random_float_in_range(-4.0, 4.0),
-    //                 z: random_float_in_range(-4.0, 4.0),
+    // // Add some random colored metal spheres
+    // for _ in 0..3 {
+    //     world.add(Box::new(Sphere {
+    //         center: Point3 {
+    //             x: random_float_in_range(-4.0, 4.0),
+    //             y: random_float_in_range(-4.0, 4.0),
+    //             z: random_float_in_range(-4.0, 4.0),
+    //         },
+    //         radius: random_float_in_range(0.05, 2.0),
+    //         material: Rc::new(MatMetal {
+    //             albedo: Color {
+    //                 x: random_float(),
+    //                 y: random_float(),
+    //                 z: random_float(),
     //             },
-    //             radius: random_float_in_range(0.05, 2.0),
-    //             material: Rc::new(MatLambertian {
-    //                 albedo: Color {
-    //                     x: random_float(),
-    //                     y: random_float(),
-    //                     z: random_float(),
-    //                 },
-    //             }),
-    //         }));
-    //     }
+    //         }),
+    //     }));
+    // }
+
+    // // Add some random mirror metal spheres
+    // for _ in 0..3 {
+    //     world.add(Box::new(Sphere {
+    //         center: Point3 {
+    //             x: random_float_in_range(-4.0, 4.0),
+    //             y: random_float_in_range(-4.0, 4.0),
+    //             z: random_float_in_range(-4.0, 4.0),
+    //         },
+    //         radius: random_float_in_range(0.05, 2.0),
+    //         material: Rc::new(MatMetal {
+    //             albedo: Color {
+    //                 x: random_float(),
+    //                 y: random_float(),
+    //                 z: random_float(),
+    //             },
+    //         }),
+    //     }));
+    // }
+
+    // // Add some random colored matte spheres
+    // for _ in 0..3 {
+    //     world.add(Box::new(Sphere {
+    //         center: Point3 {
+    //             x: random_float_in_range(-4.0, 4.0),
+    //             y: random_float_in_range(-4.0, 4.0),
+    //             z: random_float_in_range(-4.0, 4.0),
+    //         },
+    //         radius: random_float_in_range(0.05, 2.0),
+    //         material: Rc::new(MatLambertian {
+    //             albedo: Color {
+    //                 x: random_float(),
+    //                 y: random_float(),
+    //                 z: random_float(),
+    //             },
+    //         }),
+    //     }));
+    // }
 
     // Camera
 
-    let viewport_height = 2.0;
-    let cam = Camera::new(aspect_ratio, viewport_height);
+    let lookfrom = Point3 {
+        x: 13.0,
+        y: 2.0,
+        z: 3.0,
+    };
+    let lookat = Point3 {
+        x: 0.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    let vup = Vec3 {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    };
+    let dist_to_focus = 10.0;
+    let aperture = 0.1;
+
+    let cam = Camera::new(
+        lookfrom,
+        lookat,
+        vup,
+        20.0,
+        aspect_ratio,
+        aperture,
+        dist_to_focus,
+    );
 
     // Render
 
