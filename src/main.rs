@@ -1,9 +1,11 @@
 use fmt::Display;
+use image;
 use num::clamp;
 use num::traits::{Float, Num};
+use pbr::ProgressBar;
 use rand::prelude::*;
-use std::env;
 
+use std::env;
 use std::fmt;
 use std::fmt::Debug;
 use std::fs::File;
@@ -1016,7 +1018,7 @@ fn naive_hemisphere<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                          RANDOM SCENE                                          //
+//                                             SCENES                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn random_scene() -> HittableList<f64> {
@@ -1028,9 +1030,9 @@ fn random_scene() -> HittableList<f64> {
 
     let ground_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.5,
-            y: 0.5,
-            z: 0.5,
+            x: 80.0 / 255.0,
+            y: 144.0 / 255.0,
+            z: 22.0 / 255.0,
         },
     });
 
@@ -1048,9 +1050,9 @@ fn random_scene() -> HittableList<f64> {
 
     let material1 = Rc::new(MatDielectric {
         albedo: Color {
-            x: 0.9,
-            y: 0.9,
-            z: 0.9,
+            x: 242.0 / 255.0,
+            y: 111.0 / 255.0,
+            z: 112.0 / 255.0,
         },
         ir: 1.5,
     });
@@ -1069,9 +1071,9 @@ fn random_scene() -> HittableList<f64> {
 
     let material2 = Rc::new(MatLambertian {
         albedo: Color {
-            x: 0.4,
-            y: 0.2,
-            z: 0.1,
+            x: 111.0 / 255.0,
+            y: 165.0 / 255.0,
+            z: 242.0 / 255.0,
         },
     });
 
@@ -1123,7 +1125,7 @@ fn random_scene() -> HittableList<f64> {
             };
 
             if (center - boundary).length() > 0.9 {
-                if choose_mat < 0.33 {
+                if choose_mat < 0.66 {
                     let albedo = Color::random() * Color::random();
                     let sphere_material = Rc::new(MatLambertian { albedo });
 
@@ -1132,7 +1134,7 @@ fn random_scene() -> HittableList<f64> {
                         radius: 0.2,
                         material: sphere_material.clone(),
                     }));
-                } else if choose_mat < 0.66 {
+                } else if choose_mat < 0.85 {
                     let albedo = Color::random_range(0.5, 1.0);
                     let fuzz = random_float_in_range(0.0, 0.5);
                     let sphere_material = Rc::new(MatMetal { albedo, fuzz });
@@ -1159,68 +1161,10 @@ fn random_scene() -> HittableList<f64> {
     world
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              PPM                                               //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct FinalImage {
-    pixels: Vec<Color<f64>>,
-    width: i32,
-    height: i32,
-    samples_per_pixel: i32,
-}
-
-/// Write a PPM image to a temp directory.  Image size and contents are passed in a FinalImage.
-fn write_ppm(image_data: FinalImage) {
-    let now = time::SystemTime::now();
-    let since = now
-        .duration_since(time::UNIX_EPOCH)
-        .expect("Time went backwards.");
-
-    let filename = format!("raytrace-{:?}.ppm", since);
-
-    let temp_dir = env::temp_dir();
-    let temp_file = temp_dir.join(filename);
-
-    let mut file = File::create(temp_file).unwrap();
-    writeln!(&mut file, "P3").unwrap();
-    writeln!(&mut file, "{} {}", image_data.width, image_data.height).unwrap();
-    writeln!(&mut file, "255").unwrap(); // maximum RGB component value
-
-    for rgb in image_data.pixels.iter() {
-        write_color(&mut file, rgb, image_data.samples_per_pixel);
-    }
-}
-
-fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32) {
-    let scale = 1.0 / (samples_per_pixel as f64);
-    // sqrt applies gamma 2, ie raising the color to the power of 1/gamma, where gamma is 2.
-    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999).sqrt();
-    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999).sqrt();
-    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999).sqrt();
-    writeln!(file, "{} {} {}   ", r as u8, g as u8, b as u8).unwrap();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              MAIN                                              //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-fn main() {
-    // Configuration
-
-    let aspect_ratio = 3.0 / 2.0;
-    let width = 12000.0;
-    let height = width / aspect_ratio;
-    let samples_per_pixel: i32 = 500;
-    let max_depth = 100;
-
-    // World
-
-    // let mut world: HittableList<f64> = HittableList {
-    //     objects: Vec::new(),
-    // };
-
-    let world = random_scene();
+fn ten_spheres_scene() -> HittableList<f64> {
+    let mut world = HittableList::<f64> {
+        objects: Vec::new(),
+    };
 
     // Materials
 
@@ -1232,11 +1176,11 @@ fn main() {
         },
     });
 
-    let black_material = Rc::new(MatLambertian {
+    let grey_material = Rc::new(MatLambertian {
         albedo: Color {
-            x: 10.0 / 255.0,
-            y: 9.0 / 255.0,
-            z: 8.0 / 255.0,
+            x: 255.0 / 255.0,
+            y: 255.0 / 255.0,
+            z: 255.0 / 255.0,
         },
     });
 
@@ -1250,9 +1194,9 @@ fn main() {
 
     let metal_material = Rc::new(MatMetal {
         albedo: Color {
-            x: 200.0 / 255.0,
-            y: 200.0 / 255.0,
-            z: 220.0 / 255.0,
+            x: 64.0 / 255.0,
+            y: 64.0 / 255.0,
+            z: 64.0 / 255.0,
         },
         fuzz: 0.1,
     });
@@ -1272,7 +1216,7 @@ fn main() {
             y: 66.0 / 255.0,
             z: 70.0 / 255.0,
         },
-        fuzz: 0.6,
+        fuzz: 0.3,
     });
 
     let glass_material = Rc::new(MatDielectric {
@@ -1335,92 +1279,92 @@ fn main() {
     //     material: ground_material.clone(),
     // }));
 
-    // // Sphere 1
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: -3.163,
-    //         y: 0.45,
-    //         z: -2.705 - 0.5,
-    //     },
-    //     radius: 0.9,
-    //     material: metal_material.clone(),
-    // }));
+    // Sphere 1
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -3.363,
+            y: 0.45,
+            z: -2.705 - 0.5,
+        },
+        radius: 0.9,
+        material: grey_material.clone(),
+    }));
 
-    // // Sphere 2
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: -1.84,
-    //         y: 0.45,
-    //         z: -4.028 - 0.5,
-    //     },
-    //     radius: 0.9,
-    //     material: black_material.clone(),
-    // }));
+    // Sphere 2
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: -1.84,
+            y: 0.45,
+            z: -4.028 - 0.5,
+        },
+        radius: 0.9,
+        material: metal_material.clone(),
+    }));
 
-    // // Sphere 3 (center)
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 0.0,
-    //         y: 0.45,
-    //         z: -4.3 - 0.5,
-    //     },
-    //     radius: 0.9,
-    //     material: default_material.clone(),
-    // }));
+    // Sphere 3 (center)
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: 0.45,
+            z: -4.3 - 0.5,
+        },
+        radius: 0.9,
+        material: default_material.clone(),
+    }));
 
-    // // Sphere 4
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 1.84,
-    //         y: 0.45,
-    //         z: -4.028 - 0.5,
-    //     },
-    //     radius: 0.9,
-    //     material: mirror_material.clone(),
-    // }));
+    // Sphere 4
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 1.84,
+            y: 0.45,
+            z: -4.028 - 0.5,
+        },
+        radius: 0.9,
+        material: mirror_material.clone(),
+    }));
 
-    // // Sphere 5
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 3.163,
-    //         y: 0.45,
-    //         z: -2.705 - 0.5,
-    //     },
-    //     radius: 0.9,
-    //     material: metal_red_material.clone(),
-    // }));
+    // Sphere 5
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 3.363,
+            y: 0.45,
+            z: -2.705 - 0.5,
+        },
+        radius: 0.9,
+        material: metal_red_material.clone(),
+    }));
 
-    // for s in 0..5 {
-    //     // Glass sphere
-    //     let s = s as f64;
-    //     world.add(Box::new(Sphere {
-    //         center: Point3 {
-    //             x: -0.7 + s * 0.35,
-    //             y: -0.28,
-    //             z: -1.0,
-    //         },
-    //         radius: 0.15,
-    //         material: Rc::new(MatDielectric {
-    //             ir: 1.5,
-    //             albedo: Color {
-    //                 x: random_float(),
-    //                 y: random_float(),
-    //                 z: random_float(),
-    //             },
-    //         }),
-    //     }));
-    // }
+    for s in 0..5 {
+        // Glass sphere
+        let s = s as f64;
+        world.add(Box::new(Sphere {
+            center: Point3 {
+                x: -0.7 + s * 0.35,
+                y: -0.28,
+                z: 1.0,
+            },
+            radius: 0.15,
+            material: Rc::new(MatDielectric {
+                ir: 1.5,
+                albedo: Color {
+                    x: random_float(),
+                    y: random_float(),
+                    z: random_float(),
+                },
+            }),
+        }));
+    }
 
-    // // "World" sphere
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 0.0,
-    //         y: -1000.45,
-    //         z: -1.2,
-    //     },
-    //     radius: 1000.0,
-    //     material: ground_material.clone(),
-    // }));
+    // "World" sphere
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: -1000.45,
+            z: -1.2,
+        },
+        radius: 1000.0,
+        material: ground_material.clone(),
+    }));
 
     // // Add some random colored metal spheres
     // for _ in 0..3 {
@@ -1479,17 +1423,197 @@ fn main() {
     //     }));
     // }
 
+    world
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                          IMAGE FILES                                           //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct FinalImage {
+    pixels: Vec<Color<f64>>,
+    width: u32,
+    height: u32,
+    samples_per_pixel: i32,
+}
+
+/// Write a PPM image to a temp directory.  Image size and contents are passed in a FinalImage.
+#[allow(dead_code)]
+fn write_ppm(image_data: FinalImage) {
+    let now = time::SystemTime::now();
+    let since = now
+        .duration_since(time::UNIX_EPOCH)
+        .expect("Time went backwards.");
+
+    let filename = format!("raytrace-{:?}.ppm", since);
+
+    let temp_dir = env::temp_dir();
+    let temp_file = temp_dir.join(filename);
+
+    let mut file = File::create(temp_file).unwrap();
+    writeln!(&mut file, "P3").unwrap();
+    writeln!(&mut file, "{} {}", image_data.width, image_data.height).unwrap();
+    writeln!(&mut file, "255").unwrap(); // maximum RGB component value
+
+    for rgb in image_data.pixels.iter() {
+        write_color(&mut file, rgb, image_data.samples_per_pixel);
+    }
+}
+
+#[allow(dead_code)]
+fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32) {
+    let scale = 1.0 / (samples_per_pixel as f64);
+    // sqrt applies gamma 2, ie raising the color to the power of 1/gamma, where gamma is 2.
+    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999).sqrt();
+    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999).sqrt();
+    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999).sqrt();
+    writeln!(file, "{} {} {}   ", r as u8, g as u8, b as u8).unwrap();
+}
+
+/// Write an image file to a temp directory.  Image size and contents are passed in a FinalImage
+/// struct.
+fn write_image(image_data: FinalImage) {
+    let now = time::SystemTime::now();
+    let since = now
+        .duration_since(time::UNIX_EPOCH)
+        .expect("Time went backwards.");
+
+    let filename = format!("raytrace-{:?}.jpg", since);
+
+    let temp_dir = env::temp_dir();
+    let temp_file = temp_dir.join(&filename);
+
+    // let buf_size = (image_data.pixels.len() * 3) as usize;
+    // let mut buffer = Vec::<u8>::with_capacity(buf_size);
+
+    let mut buf = image::ImageBuffer::new(image_data.width, image_data.height);
+
+    // for (x, y, out_pixel) in buf.enumerate_pixels_mut() {
+    //     let i = y * image_data.width + x;
+    //     let data_pixel = image_data.pixels.get(i).unwrap();
+    //     *out_pixel = image::Rgb([]);
+    // }
+
+    for (i, pixel) in image_data.pixels.iter().enumerate() {
+        let x = i as u32 % image_data.width;
+        let y = i as u32 / image_data.width;
+        let color = get_color_u8(&&pixel, image_data.samples_per_pixel);
+        buf.put_pixel(x, y, image::Rgb([color.x, color.y, color.z]));
+    }
+
+    match buf.save(temp_file) {
+        Ok(f) => println!("Wrote {}", filename),
+        Err(err) => println!("Error writing {}", err),
+    }
+    // buf.save(temp_file);
+
+    // for pixel in image_data.pixels {
+    //     let color = get_color_u8(&&pixel, image_data.samples_per_pixel);
+    //     buffer.push(color.x);
+    //     buffer.push(color.y);
+    //     buffer.push(color.z);
+    // }
+
+    // image::save_buffer(
+    //     temp_file,
+    //     buffer,
+    //     image_data.width,
+    //     image_data.height,
+    //     image::ColorType::Rgb8,
+    // )
+    // .unwrap();
+}
+
+fn get_color_u8(pixel_color: &Color<f64>, samples_per_pixel: i32) -> Color<u8> {
+    let scale = 1.0 / (samples_per_pixel as f64);
+    // sqrt applies gamma 2, ie raising the color to the power of 1/gamma, where gamma is 2.
+    let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999).sqrt();
+    let g = 256.0 * clamp(pixel_color.y * scale, 0.0, 0.999).sqrt();
+    let b = 256.0 * clamp(pixel_color.z * scale, 0.0, 0.999).sqrt();
+
+    Color {
+        x: r as u8,
+        y: g as u8,
+        z: b as u8,
+    }
+}
+
+// fn main() {
+//     const WIDTH: u32 = 300;
+//     const HEIGHT: u32 = 200;
+//     const TOTAL: usize = (3 * WIDTH * HEIGHT) as usize;
+
+//     let mut buffer: [u8; TOTAL] = [0; TOTAL];
+
+//     for i in buffer.iter_mut() {
+//         *i = 64;
+//     }
+
+//     image::save_buffer("image.png", &buffer, WIDTH, HEIGHT, image::ColorType::Rgb8).unwrap();
+// }
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                              MAIN                                              //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+fn main() {
+    // Configuration
+
+    let aspect_ratio = 3.0 / 2.0;
+    let width = 4000.0;
+    let height = (width / aspect_ratio).floor();
+    let samples_per_pixel: i32 = 1;
+    let max_depth = 2;
+
+    // Progress bar
+    let mut pb = ProgressBar::new((width * height) as u64);
+
+    // World
+
+    // let mut world: HittableList<f64> = HittableList {
+    //     objects: Vec::new(),
+    // };
+
+    // let world = random_scene();
+    let world = ten_spheres_scene();
+
     // Camera
 
+    // let lookfrom = Point3 {
+    //     x: 13.0,
+    //     y: 2.0,
+    //     z: 3.0,
+    // };
+    // let lookat = Point3 {
+    //     x: 0.0,
+    //     y: 0.0,
+    //     z: 0.0,
+    // };
+    // let vup = Vec3 {
+    //     x: 0.0,
+    //     y: 1.0,
+    //     z: 0.0,
+    // };
+    // let dist_to_focus = 10.0;
+    // let aperture = 0.0;
+
+    // let cam = Camera::new(
+    //     lookfrom,
+    //     lookat,
+    //     vup,
+    //     20.0,
+    //     aspect_ratio,
+    //     aperture,
+    //     dist_to_focus,
+    // );
     let lookfrom = Point3 {
-        x: 13.0,
-        y: 2.0,
-        z: 3.0,
+        x: 0.0,
+        y: 0.5,
+        z: 4.0,
     };
     let lookat = Point3 {
         x: 0.0,
         y: 0.0,
-        z: 0.0,
+        z: -3.0,
     };
     let vup = Vec3 {
         x: 0.0,
@@ -1497,13 +1621,13 @@ fn main() {
         z: 0.0,
     };
     let dist_to_focus = 10.0;
-    let aperture = 0.1;
+    let aperture = 0.0;
 
     let cam = Camera::new(
         lookfrom,
         lookat,
         vup,
-        20.0,
+        45.0,
         aspect_ratio,
         aperture,
         dist_to_focus,
@@ -1519,6 +1643,15 @@ fn main() {
         };
         (width * height) as usize
     ];
+
+    // Default material to clone into each HitRecord
+    let default_material = Rc::new(MatLambertian {
+        albedo: Color {
+            x: 122.0 / 255.0,
+            y: 175.0 / 255.0,
+            z: 238.0 / 255.0,
+        },
+    });
 
     let mut i: usize = 0;
     for y in (0..(height as i32)).rev() {
@@ -1550,17 +1683,26 @@ fn main() {
             }
 
             i += 1;
+
+            pb.inc();
         }
     }
 
-    write_ppm(FinalImage {
-        width: width as i32,
-        height: height as i32,
+    // write_ppm(FinalImage {
+    //     width: width as i32,
+    //     height: height as i32,
+    //     pixels,
+    //     samples_per_pixel,
+    // });
+
+    write_image(FinalImage {
+        width: width as u32,
+        height: height as u32,
         pixels,
         samples_per_pixel,
     });
 
-    println!("done");
+    pb.finish_print("Done!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
