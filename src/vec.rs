@@ -296,7 +296,6 @@ impl<T: Num + Copy + SubAssign> SubAssign<T> for Vec3<T> {
     #[inline]
     fn sub_assign(&mut self, other: T) {
         self.x -= other;
-        self.x -= other;
         self.y -= other;
         self.z -= other;
     }
@@ -719,8 +718,10 @@ fn vec3_sub_assign_scalar_operator() {
         y: 3.0,
         z: 4.0,
     };
+    println!("{:?}", a);
 
     a -= 10.0;
+    println!("{:?}", a);
 
     let expected = Vec3 {
         x: -8.0,
