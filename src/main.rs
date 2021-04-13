@@ -794,7 +794,7 @@ fn write_color(file: &mut File, pixel_color: &Color<f64>, samples_per_pixel: i32
 
 /// Write an image file to a temp directory.  Image size and contents are passed in a FinalImage
 /// struct.
-fn write_image(image_data: FinalImage) {
+fn write_png(image_data: FinalImage) {
     let now = time::SystemTime::now();
     let since = now
         .duration_since(time::UNIX_EPOCH)
@@ -967,7 +967,7 @@ fn render() {
         }
     }
 
-    write_image(FinalImage {
+    write_png(FinalImage {
         width: width as u32,
         height: height as u32,
         pixels,
