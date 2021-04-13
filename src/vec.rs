@@ -4,10 +4,6 @@ use num::traits::{Float, Num};
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                              VEC3                                              //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 /// A vector with three components.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3<T: Num + Copy> {
@@ -126,21 +122,6 @@ impl<T: Float> Vec3<T> {
         r_out_parallel + r_out_perp
     }
 }
-
-// impl<T: Float> Clone for Vec3<T> {
-//     fn clone(&self) -> Self {
-//         Vec3 {
-//             x: self.x,
-//             y: self.y,
-//             z: self.z,
-//         }
-//     }
-//     fn clone_from(&mut self, source: &Self) {
-//         self.x = source.x;
-//         self.y = source.y;
-//         self.z = source.z;
-//     }
-// }
 
 ///////////
 //  ADD  //
