@@ -1051,7 +1051,7 @@ fn get_color_u8(pixel_color: &Color<f64>, samples_per_pixel: i32) -> Color<u8> {
 //                                              MAIN                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn main() {
+fn render() {
     // Configuration
 
     let aspect_ratio = 3.0 / 2.0;
@@ -1199,6 +1199,10 @@ fn main() {
     });
 
     pb.finish_print("Done!");
+}
+
+fn main() {
+    render();
 }
 
 // #[test]
