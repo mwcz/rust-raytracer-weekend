@@ -88,70 +88,6 @@ impl<T: Float + Debug> Camera<T> {
     }
 }
 
-// #[allow(dead_code)]
-// struct Camera<T: Float + Debug> {
-//     aspect_ratio: T,
-//     viewport_height: T,
-//     viewport_width: T,
-//     focal_length: T,
-
-//     origin: Point3<T>,
-//     lower_left_corner: Point3<T>,
-//     horizontal: Vec3<T>,
-//     vertical: Vec3<T>,
-// }
-
-// impl<T: Float + Debug> Camera<T> {
-//     /// Create a new Camera.
-//     fn new(aspect_ratio: T, viewport_height: T) -> Camera<T> {
-//         let viewport_width = aspect_ratio * viewport_height;
-//         let focal_length = T::one();
-
-//         let origin = Point3::zero();
-
-//         let horizontal = Point3 {
-//             x: viewport_width,
-//             y: T::zero(),
-//             z: T::zero(),
-//         };
-
-//         let vertical = Point3 {
-//             x: T::zero(),
-//             y: viewport_height,
-//             z: T::zero(),
-//         };
-
-//         let lower_left_corner = origin
-//             - horizontal / T::from(2.0).unwrap()
-//             - vertical / T::from(2.0).unwrap()
-//             - Vec3 {
-//                 x: T::zero(),
-//                 y: T::zero(),
-//                 z: focal_length,
-//             };
-
-//         Camera {
-//             aspect_ratio,
-//             viewport_height,
-//             viewport_width,
-//             focal_length,
-//             origin,
-//             horizontal,
-//             vertical,
-//             lower_left_corner,
-//         }
-//     }
-
-//     /// Get a ray at (u,v).
-//     fn get_ray(&self, u: T, v: T) -> Ray<T> {
-//         Ray {
-//             origin: self.origin,
-//             direction: self.lower_left_corner + self.horizontal * u + self.vertical * v
-//                 - self.origin,
-//         }
-//     }
-// }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              RAY                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -404,21 +340,13 @@ impl<T: Float> Material<T> for MatLambertian<T> {
             scatter_direction
         };
 
-        // // avoid scattering when near zero
-        // if scatter_direction.near_zero() {
-        //     // scatter_direction.clone_from(&rec.normal);
-        //     scatter_direction = rec.normal;
-        // }
-
         let scatter_ray = Ray {
             origin: rec.p,
             direction: scatter_direction,
         };
 
-        // scattered.clone_from(&scatter_ray);
         *scattered = scatter_ray;
 
-        // attenuation.clone_from(&self.albedo);
         *attenuation = self.albedo;
 
         true
@@ -728,66 +656,6 @@ fn ten_spheres_scene() -> HittableList<f64> {
         fuzz: 0.3,
     });
 
-    let glass_material = Rc::new(MatDielectric {
-        albedo: Color {
-            x: 0.99,
-            y: 0.99,
-            z: 0.99,
-        },
-        ir: 1.5,
-    });
-
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 0.0,
-    //         y: 0.0,
-    //         z: -1.0,
-    //     },
-    //     radius: 0.5,
-    //     material: metal_red_material.clone(),
-    // }));
-
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: -1.0,
-    //         y: 0.0,
-    //         z: -1.0,
-    //     },
-    //     radius: 0.5,
-    //     material: default_material.clone(),
-    // }));
-
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: -1.0,
-    //         y: 0.0,
-    //         z: -1.0,
-    //     },
-    //     radius: -0.45,
-    //     material: glass_material.clone(),
-    // }));
-
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 1.0,
-    //         y: 0.0,
-    //         z: -1.0,
-    //     },
-    //     radius: 0.5,
-    //     material: metal_material.clone(),
-    // }));
-
-    // // Ground
-    // world.add(Box::new(Sphere {
-    //     center: Point3 {
-    //         x: 0.0,
-    //         y: -100.5,
-    //         z: -1.0,
-    //     },
-    //     radius: 100.0,
-    //     material: ground_material.clone(),
-    // }));
-
     // Sphere 1
     world.add(Box::new(Sphere {
         center: Point3 {
@@ -875,63 +743,6 @@ fn ten_spheres_scene() -> HittableList<f64> {
         material: ground_material.clone(),
     }));
 
-    // // Add some random colored metal spheres
-    // for _ in 0..3 {
-    //     world.add(Box::new(Sphere {
-    //         center: Point3 {
-    //             x: random_float_in_range(-4.0, 4.0),
-    //             y: random_float_in_range(-4.0, 4.0),
-    //             z: random_float_in_range(-4.0, 4.0),
-    //         },
-    //         radius: random_float_in_range(0.05, 2.0),
-    //         material: Rc::new(MatMetal {
-    //             albedo: Color {
-    //                 x: random_float(),
-    //                 y: random_float(),
-    //                 z: random_float(),
-    //             },
-    //         }),
-    //     }));
-    // }
-
-    // // Add some random mirror metal spheres
-    // for _ in 0..3 {
-    //     world.add(Box::new(Sphere {
-    //         center: Point3 {
-    //             x: random_float_in_range(-4.0, 4.0),
-    //             y: random_float_in_range(-4.0, 4.0),
-    //             z: random_float_in_range(-4.0, 4.0),
-    //         },
-    //         radius: random_float_in_range(0.05, 2.0),
-    //         material: Rc::new(MatMetal {
-    //             albedo: Color {
-    //                 x: random_float(),
-    //                 y: random_float(),
-    //                 z: random_float(),
-    //             },
-    //         }),
-    //     }));
-    // }
-
-    // // Add some random colored matte spheres
-    // for _ in 0..3 {
-    //     world.add(Box::new(Sphere {
-    //         center: Point3 {
-    //             x: random_float_in_range(-4.0, 4.0),
-    //             y: random_float_in_range(-4.0, 4.0),
-    //             z: random_float_in_range(-4.0, 4.0),
-    //         },
-    //         radius: random_float_in_range(0.05, 2.0),
-    //         material: Rc::new(MatLambertian {
-    //             albedo: Color {
-    //                 x: random_float(),
-    //                 y: random_float(),
-    //                 z: random_float(),
-    //             },
-    //         }),
-    //     }));
-    // }
-
     world
 }
 
@@ -992,16 +803,7 @@ fn write_image(image_data: FinalImage) {
     let temp_dir = env::temp_dir();
     let temp_file = temp_dir.join(&filename);
 
-    // let buf_size = (image_data.pixels.len() * 3) as usize;
-    // let mut buffer = Vec::<u8>::with_capacity(buf_size);
-
     let mut buf = image::ImageBuffer::new(image_data.width, image_data.height);
-
-    // for (x, y, out_pixel) in buf.enumerate_pixels_mut() {
-    //     let i = y * image_data.width + x;
-    //     let data_pixel = image_data.pixels.get(i).unwrap();
-    //     *out_pixel = image::Rgb([]);
-    // }
 
     for (i, pixel) in image_data.pixels.iter().enumerate() {
         let x = i as u32 % image_data.width;
@@ -1014,23 +816,6 @@ fn write_image(image_data: FinalImage) {
         Ok(_) => println!("Wrote {}", filename),
         Err(err) => println!("Error writing {}", err),
     }
-    // buf.save(temp_file);
-
-    // for pixel in image_data.pixels {
-    //     let color = get_color_u8(&&pixel, image_data.samples_per_pixel);
-    //     buffer.push(color.x);
-    //     buffer.push(color.y);
-    //     buffer.push(color.z);
-    // }
-
-    // image::save_buffer(
-    //     temp_file,
-    //     buffer,
-    //     image_data.width,
-    //     image_data.height,
-    //     image::ColorType::Rgb8,
-    // )
-    // .unwrap();
 }
 
 fn get_color_u8(pixel_color: &Color<f64>, samples_per_pixel: i32) -> Color<u8> {
@@ -1064,10 +849,6 @@ fn render() {
     let mut pb = ProgressBar::new((width * height) as u64);
 
     // World
-
-    // let mut world: HittableList<f64> = HittableList {
-    //     objects: Vec::new(),
-    // };
 
     // let world = random_scene();
     let world = ten_spheres_scene();
@@ -1183,13 +964,6 @@ fn render() {
             pb.inc();
         }
     }
-
-    // write_ppm(FinalImage {
-    //     width: width as i32,
-    //     height: height as i32,
-    //     pixels,
-    //     samples_per_pixel,
-    // });
 
     write_image(FinalImage {
         width: width as u32,
