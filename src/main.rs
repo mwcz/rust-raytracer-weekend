@@ -458,6 +458,7 @@ fn naive_hemisphere<T: Float>(p: Vec3<T>, normal: Vec3<T>) -> Vec3<T> {
 //                                             SCENES                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#[allow(dead_code)]
 fn random_scene() -> HittableList<f64> {
     let mut world = HittableList::<f64> {
         objects: Vec::new(),
@@ -598,6 +599,7 @@ fn random_scene() -> HittableList<f64> {
     world
 }
 
+#[allow(dead_code)]
 fn ten_spheres_scene() -> HittableList<f64> {
     let mut world = HittableList::<f64> {
         objects: Vec::new(),
