@@ -8,7 +8,7 @@ use crate::Point3;
 use std::rc::Rc;
 
 #[allow(dead_code)]
-pub fn random_scene() -> HittableList<f64> {
+pub fn scene() -> HittableList<f64> {
     let mut world = HittableList::new(Vec::new());
 
     // Ground

@@ -120,26 +120,22 @@ pub fn scene() -> HittableList<f64> {
         material: metal_red_material.clone(),
     }));
 
-    for s in 0..5 {
-        // Glass sphere
-        let s = s as f64;
-        world.add(Box::new(Sphere {
-            center: Point3 {
-                x: -0.7 + s * 0.35,
-                y: -0.28,
+    world.add(Box::new(Sphere {
+        center: Point3 {
+            x: 0.0,
+            y: 0.45,
+            z: -1.0,
+        },
+        radius: 0.9,
+        material: Rc::new(material::Dielectric {
+            ir: 1.5,
+            albedo: Color {
+                x: 1.0,
+                y: 1.0,
                 z: 1.0,
             },
-            radius: 0.15,
-            material: Rc::new(material::Dielectric {
-                ir: 1.5,
-                albedo: Color {
-                    x: random_float(),
-                    y: random_float(),
-                    z: random_float(),
-                },
-            }),
-        }));
-    }
+        }),
+    }));
 
     // "World" sphere
     world.add(Box::new(Sphere {

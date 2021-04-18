@@ -38,8 +38,9 @@ fn render() {
 
     // World
 
-    // let world = Scenes::random_scene::random_scene();
-    let world = Scenes::ten_spheres::ten_spheres();
+    // let world = Scenes::random_scene::scene();
+    // let world = Scenes::ten_spheres::scene();
+    let world = Scenes::glass_sphere_scene::scene();
 
     // Camera
 
