@@ -28,9 +28,9 @@ fn render() {
     // Configuration
 
     let aspect_ratio = 3.0 / 2.0;
-    let width = 100.0;
+    let width = 400.0;
     let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 50;
+    let samples_per_pixel: i32 = 100;
     let max_depth = 10;
 
     // Progress bar
