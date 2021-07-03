@@ -1,42 +1,41 @@
 use crate::random;
 use fmt::Display;
-use num::traits::{Float, Num};
 use std::fmt;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A vector with three components.
 #[derive(Debug, Copy, Clone, PartialEq)]
-pub struct Vec3<T: Num + Copy> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
+pub struct Vec3 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 // Alias Point3 and Color to avoid accidental concept pollution.
-pub type Point3<T> = Vec3<T>;
-pub type Color<T> = Vec3<T>;
+pub type Point3 = Vec3;
+pub type Color = Vec3;
 
 #[allow(dead_code)]
-impl<T: Float> Vec3<T> {
-    pub fn zero() -> Vec3<T> {
+impl Vec3 {
+    pub fn zero() -> Vec3 {
         Vec3 {
-            x: T::zero(),
-            y: T::zero(),
-            z: T::zero(),
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
         }
     }
 
-    pub fn one() -> Vec3<T> {
+    pub fn one() -> Vec3 {
         Vec3 {
-            x: T::one(),
-            y: T::one(),
-            z: T::one(),
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
         }
     }
 
     /// Create a vector randomly seeded with values in the range [0..1)
     #[allow(dead_code)]
-    pub fn random() -> Vec3<T> {
+    pub fn random() -> Vec3 {
         Vec3 {
             x: random::random_float(),
             y: random::random_float(),
@@ -45,7 +44,7 @@ impl<T: Float> Vec3<T> {
     }
 
     /// Create a vector randomly seeded with values in the given range.
-    pub fn random_range(min: T, max: T) -> Vec3<T> {
+    pub fn random_range(min: f32, max: f32) -> Vec3 {
         Vec3 {
             x: random::random_float_in_range(min, max),
             y: random::random_float_in_range(min, max),
@@ -54,11 +53,11 @@ impl<T: Float> Vec3<T> {
     }
 
     /// Create a vector randomly seeded with a point inside the unit sphere.
-    pub fn random_in_unit_sphere() -> Vec3<T> {
+    pub fn random_in_unit_sphere() -> Vec3 {
         loop {
-            let p = Vec3::random_range(-T::one(), T::one());
+            let p = Vec3::random_range(-1.0, 1.0);
 
-            if p.length_squared() >= T::one() {
+            if p.length_squared() >= 1.0 {
                 continue;
             }
 
@@ -67,15 +66,15 @@ impl<T: Float> Vec3<T> {
     }
 
     /// Create a unit vector pointing in a random direction.
-    pub fn random_unit_vector() -> Vec3<T> {
-        Vec3::<T>::random_in_unit_sphere().unit()
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::random_in_unit_sphere().unit()
     }
 
     /// Create a vector randomly seeded with a point inside the unit hemisphere occupied by the
     /// given normal.
-    pub fn random_in_hemisphere(normal: &Vec3<T>) -> Vec3<T> {
+    pub fn random_in_hemisphere(normal: &Vec3) -> Vec3 {
         let in_unit_sphere = Vec3::random_in_unit_sphere();
-        if in_unit_sphere.dot(normal) > T::zero() {
+        if in_unit_sphere.dot(normal) > 0.0 {
             in_unit_sphere
         } else {
             -in_unit_sphere
@@ -84,15 +83,15 @@ impl<T: Float> Vec3<T> {
 
     /// Create a vector random seeded within a unit disk.  To be used as an origin point for
     /// casting rays from a virtual film plane.
-    pub fn random_in_unit_disk() -> Vec3<T> {
+    pub fn random_in_unit_disk() -> Vec3 {
         loop {
             let p = Vec3 {
-                x: random::random_float_in_range(-T::one(), T::one()),
-                y: random::random_float_in_range(-T::one(), T::one()),
-                z: T::zero(),
+                x: random::random_float_in_range(-1.0, 1.0),
+                y: random::random_float_in_range(-1.0, 1.0),
+                z: 0.0,
             };
 
-            if p.length_squared() >= T::one() {
+            if p.length_squared() >= 1.0 {
                 continue;
             }
 
@@ -102,22 +101,22 @@ impl<T: Float> Vec3<T> {
 
     /// Return true if the vector is very close to the zero vector.
     pub fn near_zero(&self) -> bool {
-        let s = T::from(1e-8).unwrap();
+        let s = 1e-8;
         self.x.abs() < s && self.y.abs() < s && self.z.abs() < s
     }
 
     /// Reflect vector off normal n.
-    pub fn reflect(&self, n: Vec3<T>) -> Vec3<T> {
-        *self - n * T::from(2.0).unwrap() * self.dot(&n)
+    pub fn reflect(&self, n: Vec3) -> Vec3 {
+        *self - 2.0f32 * n * self.dot(&n)
         // n * v.dot(&n) * T::from(2.0).unwrap()
     }
 
     /// Refract vector entering surface with normal n.
-    pub fn refract(&self, n: Vec3<T>, etai_over_etat: T) -> Vec3<T> {
-        let dot_normal = (self * -T::one()).dot(&n);
-        let cos_theta = dot_normal.min(T::one());
+    pub fn refract(&self, n: Vec3, etai_over_etat: f32) -> Vec3 {
+        let dot_normal = (self * -1.0).dot(&n);
+        let cos_theta = dot_normal.min(1.0);
         let r_out_perp = (*self + n * cos_theta) * etai_over_etat;
-        let r_out_parallel = n * -(-r_out_perp.length_squared() + T::one()).sqrt();
+        let r_out_parallel = n * -(-r_out_perp.length_squared() + 1.0).sqrt();
 
         r_out_parallel + r_out_perp
     }
@@ -128,7 +127,7 @@ impl<T: Float> Vec3<T> {
 ///////////
 
 // Vec3 * Vec3
-impl<T: Num + Copy> Add<Vec3<T>> for Vec3<T> {
+impl Add<Vec3> for Vec3 {
     type Output = Self;
 
     #[inline]
@@ -142,11 +141,11 @@ impl<T: Num + Copy> Add<Vec3<T>> for Vec3<T> {
 }
 
 // Vec * Float
-impl<T: Num + Copy> Add<T> for Vec3<T> {
+impl Add for Vec3 {
     type Output = Self;
 
     #[inline]
-    fn add(self, other: T) -> Self {
+    fn add(self, other: f32) -> Self {
         Self {
             x: self.x + other,
             y: self.y + other,
@@ -155,12 +154,12 @@ impl<T: Num + Copy> Add<T> for Vec3<T> {
     }
 }
 
-// f64 * Vec
-impl Add<Vec3<f64>> for f64 {
-    type Output = Vec3<f64>;
+// f32 * Vec
+impl Add<Vec3> for f32 {
+    type Output = Vec3;
 
     #[inline]
-    fn add(self, other: Vec3<f64>) -> Vec3<f64> {
+    fn add(self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self + other.x,
             y: self + other.y,
@@ -177,7 +176,7 @@ impl Add<Vec3<f64>> for f64 {
 //////////////////
 
 // Vec3 += Vec3
-impl<T: Num + Copy + AddAssign> AddAssign<Vec3<T>> for Vec3<T> {
+impl AddAssign<Vec3> for Vec3 {
     #[inline]
     fn add_assign(&mut self, other: Self) {
         self.x += other.x;
@@ -187,9 +186,9 @@ impl<T: Num + Copy + AddAssign> AddAssign<Vec3<T>> for Vec3<T> {
 }
 
 // Vec3 += n
-impl<T: Num + Copy + AddAssign> AddAssign<T> for Vec3<T> {
+impl AddAssign for Vec3 {
     #[inline]
-    fn add_assign(&mut self, other: T) {
+    fn add_assign(&mut self, other: f32) {
         self.x += other;
         self.y += other;
         self.z += other;
@@ -201,7 +200,7 @@ impl<T: Num + Copy + AddAssign> AddAssign<T> for Vec3<T> {
 ///////////
 
 // -Vec3
-impl<T: Num + Copy + Neg + Neg<Output = T>> Neg for Vec3<T> {
+impl Neg for Vec3 {
     type Output = Self;
 
     #[inline]
@@ -219,7 +218,7 @@ impl<T: Num + Copy + Neg + Neg<Output = T>> Neg for Vec3<T> {
 ///////////
 
 // Vec3 - Vec3
-impl<T: Num + Copy> Sub<Vec3<T>> for Vec3<T> {
+impl Sub<Vec3> for Vec3 {
     type Output = Self;
 
     #[inline]
@@ -233,11 +232,11 @@ impl<T: Num + Copy> Sub<Vec3<T>> for Vec3<T> {
 }
 
 // Vec3 - n
-impl<T: Num + Copy> Sub<T> for Vec3<T> {
+impl Sub for Vec3 {
     type Output = Self;
 
     #[inline]
-    fn sub(self, other: T) -> Self {
+    fn sub(self, other: f32) -> Self {
         Self {
             x: self.x - other,
             y: self.y - other,
@@ -246,12 +245,12 @@ impl<T: Num + Copy> Sub<T> for Vec3<T> {
     }
 }
 
-// f64 - Vec3
-impl Sub<Vec3<f64>> for f64 {
-    type Output = Vec3<f64>;
+// f32 - Vec3
+impl Sub<Vec3> for f32 {
+    type Output = Vec3;
 
     #[inline]
-    fn sub(self, other: Vec3<f64>) -> Vec3<f64> {
+    fn sub(self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self - other.x,
             y: self - other.y,
@@ -264,7 +263,7 @@ impl Sub<Vec3<f64>> for f64 {
 //  SUB ASSIGN  //
 //////////////////
 
-impl<T: Num + Copy + SubAssign> SubAssign<Vec3<T>> for Vec3<T> {
+impl SubAssign<Vec3> for Vec3 {
     #[inline]
     fn sub_assign(&mut self, other: Self) {
         self.x -= other.x;
@@ -273,9 +272,9 @@ impl<T: Num + Copy + SubAssign> SubAssign<Vec3<T>> for Vec3<T> {
     }
 }
 
-impl<T: Num + Copy + SubAssign> SubAssign<T> for Vec3<T> {
+impl SubAssign for Vec3 {
     #[inline]
-    fn sub_assign(&mut self, other: T) {
+    fn sub_assign(&mut self, other: f32) {
         self.x -= other;
         self.y -= other;
         self.z -= other;
@@ -286,7 +285,7 @@ impl<T: Num + Copy + SubAssign> SubAssign<T> for Vec3<T> {
 //  MUL  //
 ///////////
 
-impl<T: Num + Copy> Mul<Vec3<T>> for Vec3<T> {
+impl Mul<Vec3> for Vec3 {
     type Output = Self;
 
     #[inline]
@@ -299,11 +298,11 @@ impl<T: Num + Copy> Mul<Vec3<T>> for Vec3<T> {
     }
 }
 
-impl<T: Num + Copy> Mul<T> for Vec3<T> {
+impl Mul for Vec3 {
     type Output = Self;
 
     #[inline]
-    fn mul(self, other: T) -> Self {
+    fn mul(self, other: f32) -> Self {
         Self {
             x: self.x * other,
             y: self.y * other,
@@ -312,12 +311,12 @@ impl<T: Num + Copy> Mul<T> for Vec3<T> {
     }
 }
 
-impl<'a, T: Num + Copy> Mul<T> for &'a Vec3<T> {
-    type Output = Vec3<T>;
+impl<'a> Mul for &'a Vec3 {
+    type Output = Vec3;
 
     #[inline]
-    fn mul(self, other: T) -> Vec3<T> {
-        Vec3::<T> {
+    fn mul(self, other: f32) -> Vec3 {
+        Vec3 {
             x: self.x * other,
             y: self.y * other,
             z: self.z * other,
@@ -325,12 +324,24 @@ impl<'a, T: Num + Copy> Mul<T> for &'a Vec3<T> {
     }
 }
 
-// f64 * Vec3
-impl Mul<Vec3<f64>> for f64 {
-    type Output = Vec3<f64>;
+// f32 * Vec3
+impl Mul<f32> for Vec3 {
+    type Output = Vec3;
 
     #[inline]
-    fn mul(self, other: Vec3<f64>) -> Vec3<f64> {
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self * other.x,
+            y: self * other.y,
+            z: self * other.z,
+        }
+    }
+}
+impl Mul<Vec3> for f32 {
+    type Output = Vec3;
+
+    #[inline]
+    fn mul(self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self * other.x,
             y: self * other.y,
@@ -343,7 +354,7 @@ impl Mul<Vec3<f64>> for f64 {
 //  MUL ASSIGN  //
 //////////////////
 
-impl<T: Num + Copy + MulAssign> MulAssign<Vec3<T>> for Vec3<T> {
+impl MulAssign<Vec3> for Vec3 {
     #[inline]
     fn mul_assign(&mut self, other: Self) {
         self.x *= other.x;
@@ -352,9 +363,9 @@ impl<T: Num + Copy + MulAssign> MulAssign<Vec3<T>> for Vec3<T> {
     }
 }
 
-impl<T: Num + Copy + MulAssign> MulAssign<T> for Vec3<T> {
+impl MulAssign for Vec3 {
     #[inline]
-    fn mul_assign(&mut self, other: T) {
+    fn mul_assign(&mut self, other: f32) {
         self.x *= other;
         self.y *= other;
         self.z *= other;
@@ -365,7 +376,20 @@ impl<T: Num + Copy + MulAssign> MulAssign<T> for Vec3<T> {
 //  DIV  //
 ///////////
 
-impl<T: Num + Copy> Div<Vec3<T>> for Vec3<T> {
+impl Div<f32> for Vec3 {
+    type Output = Self;
+
+    #[inline]
+    fn div(self, other: f32) -> Self {
+        Self {
+            x: self.x / other,
+            y: self.y / other,
+            z: self.z / other,
+        }
+    }
+}
+
+impl Div<Vec3> for Vec3 {
     type Output = Self;
 
     #[inline]
@@ -378,11 +402,11 @@ impl<T: Num + Copy> Div<Vec3<T>> for Vec3<T> {
     }
 }
 
-impl<T: Num + Copy> Div<T> for Vec3<T> {
+impl Div for Vec3 {
     type Output = Self;
 
     #[inline]
-    fn div(self, other: T) -> Self {
+    fn div(self, other: f32) -> Self {
         Self {
             x: self.x / other,
             y: self.y / other,
@@ -395,7 +419,7 @@ impl<T: Num + Copy> Div<T> for Vec3<T> {
 //  DIV ASSIGN  //
 //////////////////
 
-impl<T: Num + Copy + DivAssign> DivAssign<Vec3<T>> for Vec3<T> {
+impl DivAssign<Vec3> for Vec3 {
     #[inline]
     fn div_assign(&mut self, other: Self) {
         self.x /= other.x;
@@ -404,9 +428,9 @@ impl<T: Num + Copy + DivAssign> DivAssign<Vec3<T>> for Vec3<T> {
     }
 }
 
-impl<T: Num + Copy + DivAssign> DivAssign<T> for Vec3<T> {
+impl DivAssign for Vec3 {
     #[inline]
-    fn div_assign(&mut self, other: T) {
+    fn div_assign(&mut self, other: f32) {
         self.x /= other;
         self.y /= other;
         self.z /= other;
@@ -414,16 +438,16 @@ impl<T: Num + Copy + DivAssign> DivAssign<T> for Vec3<T> {
 }
 
 #[allow(dead_code)]
-impl<T: Num + Copy> Vec3<T> {
+impl Vec3 {
     /// Get the magnitude squared of this vector.
     #[inline]
-    pub fn length_squared(&self) -> T {
+    pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     /// Get the dot product of this vector and another vector.
     #[inline]
-    pub fn dot(&self, other: &Self) -> T {
+    pub fn dot(&self, other: &Self) -> f32 {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
@@ -439,22 +463,22 @@ impl<T: Num + Copy> Vec3<T> {
 }
 
 #[allow(dead_code)]
-impl<T: Float> Vec3<T> {
+impl Vec3 {
     /// Get the magnitude of this vector.
     #[inline]
-    pub fn length(&self) -> T {
+    pub fn length(&self) -> f32 {
         self.length_squared().sqrt()
     }
 
     /// Create a new vector that's this vector reduced to length 1.
     #[inline]
-    pub fn unit(&self) -> Vec3<T> {
+    pub fn unit(&self) -> Vec3 {
         *self / (self.length())
     }
 
     /// Normalize this vector; reduce it to length 1.
     #[inline]
-    pub fn self_unit(&mut self) -> &Vec3<T> {
+    pub fn self_unit(&mut self) -> &Vec3 {
         let length = self.length();
         self.x = self.x / length;
         self.y = self.y / length;
@@ -463,7 +487,7 @@ impl<T: Float> Vec3<T> {
     }
 }
 
-impl<T: Display + Num + Copy> Display for Vec3<T> {
+impl Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }

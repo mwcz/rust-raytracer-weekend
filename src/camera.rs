@@ -1,4 +1,3 @@
-use num::traits::Float;
 use std::fmt::Debug;
 
 use crate::ray::Ray;
@@ -10,30 +9,30 @@ use crate::Vec3;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #[allow(dead_code)]
-pub struct Camera<T: Float + Debug> {
-    aspect_ratio: T,
-    origin: Point3<T>,
-    lower_left_corner: Point3<T>,
-    horizontal: Vec3<T>,
-    vertical: Vec3<T>,
-    u: Vec3<T>,
-    v: Vec3<T>,
-    w: Vec3<T>,
-    lens_radius: T,
+pub struct Camera {
+    aspect_ratio: f32,
+    origin: Point3,
+    lower_left_corner: Point3,
+    horizontal: Vec3,
+    vertical: Vec3,
+    u: Vec3,
+    v: Vec3,
+    w: Vec3,
+    lens_radius: f32,
 }
 
-impl<T: Float + Debug> Camera<T> {
+impl Camera {
     /// Create a new Camera.
     pub fn new(
-        lookfrom: Point3<T>,
-        lookat: Point3<T>,
-        vup: Vec3<T>,
-        vfov: T,
-        aspect_ratio: T,
-        aperture: T,
-        focus_dist: T,
-    ) -> Camera<T> {
-        let two = T::from(2.0).unwrap();
+        lookfrom: Point3,
+        lookat: Point3,
+        vup: Vec3,
+        vfov: f32,
+        aspect_ratio: f32,
+        aperture: f32,
+        focus_dist: f32,
+    ) -> Camera {
+        let two = 2.0;
 
         let theta = vfov.to_radians();
         let theta_half = theta / two;
@@ -65,8 +64,8 @@ impl<T: Float + Debug> Camera<T> {
     }
 
     /// Get a ray at (u,v).
-    pub fn get_ray(&self, s: T, t: T) -> Ray<T> {
-        let rd = Vec3::<T>::random_in_unit_disk() * self.lens_radius;
+    pub fn get_ray(&self, s: f32, t: f32) -> Ray {
+        let rd = Vec3::random_in_unit_disk() * self.lens_radius;
         let offset = self.u * rd.x + self.v * rd.y;
 
         Ray {
