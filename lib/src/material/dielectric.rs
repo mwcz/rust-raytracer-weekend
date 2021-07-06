@@ -1,8 +1,8 @@
+use crate::hit::HitRecord;
 use crate::material::Material;
-use crate::random_float;
-use crate::Color;
-use crate::HitRecord;
-use crate::Ray;
+use crate::random::random_float;
+use crate::ray::Ray;
+use crate::vec::Color;
 use num::traits::Float;
 
 pub struct Dielectric<T: Float> {

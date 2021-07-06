@@ -1,5 +1,5 @@
 [package]
-name = "rust-vectors"
+name = "rtw"
 version = "0.1.0"
 authors = ["mwcz <mwc@clayto.com>"]
 edition = "2018"

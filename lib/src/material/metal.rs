@@ -1,8 +1,7 @@
+use crate::hit::HitRecord;
 use crate::material::Material;
-use crate::Color;
-use crate::HitRecord;
-use crate::Ray;
-use crate::Vec3;
+use crate::ray::Ray;
+use crate::vec::{Color, Vec3};
 use num::traits::Float;
 
 pub struct Metal<T: Float> {

@@ -1,5 +1,5 @@
 use super::FinalImage;
-use crate::Color;
+use crate::vec::Color;
 use num::clamp;
 use std::env;
 use std::fs::File;

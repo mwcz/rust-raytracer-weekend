@@ -2,8 +2,7 @@ use num::traits::Float;
 use std::fmt::Debug;
 
 use crate::ray::Ray;
-use crate::Point3;
-use crate::Vec3;
+use crate::vec::{Point3, Vec3};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                             CAMERA                                             //

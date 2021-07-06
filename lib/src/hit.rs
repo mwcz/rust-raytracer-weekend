@@ -4,7 +4,7 @@
 
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::{Point3, Vec3};
+use crate::vec::{Point3, Vec3};
 use num::Float;
 use std::fmt::Debug;
 use std::rc::Rc;

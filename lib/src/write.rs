@@ -1,7 +1,7 @@
 pub mod png;
 pub mod ppm;
 
-use crate::Color;
+use crate::vec::Color;
 
 pub struct FinalImage {
     pub pixels: Vec<Color<f64>>,

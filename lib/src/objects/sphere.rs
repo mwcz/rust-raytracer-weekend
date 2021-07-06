@@ -2,11 +2,11 @@
 //  SPHERE  //
 //////////////
 
+use crate::hit::HitRecord;
 use crate::hit::Hittable;
 use crate::material::Material;
-use crate::HitRecord;
-use crate::Point3;
-use crate::Ray;
+use crate::ray::Ray;
+use crate::vec::Point3;
 use num::Float;
 use std::fmt::Debug;
 use std::rc::Rc;

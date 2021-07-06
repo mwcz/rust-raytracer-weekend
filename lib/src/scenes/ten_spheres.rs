@@ -1,9 +1,9 @@
 use crate::hit::HittableList;
 use crate::material;
 use crate::objects::sphere::Sphere;
-use crate::random_float;
-use crate::Color;
-use crate::Point3;
+use crate::random::random_float;
+use crate::vec::Color;
+use crate::vec::Point3;
 use std::rc::Rc;
 
 /// Create a scene with five large spheres in the background and five glassy colored spheres in the

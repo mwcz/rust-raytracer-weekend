@@ -6,9 +6,9 @@ pub use dielectric::Dielectric;
 pub use lambertian::Lambertian;
 pub use metal::Metal;
 
-use crate::Color;
-use crate::HitRecord;
-use crate::Ray;
+use crate::hit::HitRecord;
+use crate::ray::Ray;
+use crate::vec::Color;
 use num::traits::Float;
 
 pub trait Material<T: Float> {

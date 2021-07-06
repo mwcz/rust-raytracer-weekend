@@ -2,7 +2,7 @@ use num::traits::Float;
 use std::fmt::Debug;
 
 use crate::hit::{HitRecord, HittableList};
-use crate::{Color, Point3, Vec3};
+use crate::vec::{Color, Point3, Vec3};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Ray<T: Float> {

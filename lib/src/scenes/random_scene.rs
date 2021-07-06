@@ -1,10 +1,9 @@
 use crate::hit::HittableList;
 use crate::material;
 use crate::objects::sphere::Sphere;
-use crate::random_float;
-use crate::random_float_in_range;
-use crate::Color;
-use crate::Point3;
+use crate::random::{random_float, random_float_in_range};
+use crate::vec::Color;
+use crate::vec::Point3;
 use std::rc::Rc;
 
 #[allow(dead_code)]
