@@ -8,7 +8,10 @@ edition = "2018"
 
 [dependencies]
 num = "0.3"       # for numeric generics
-rand = "0.8.3"    # for generating random numbers
-sdl2 = "0.34.3"   # for a live preview in a sdl2 canvas
-pbr = "1.0.4"     # progress bar during render
+rand = "0.8.4"
+getrandom = { version = "0.2", features = ["js"] }
+# rand_core = "0.6.3" # only generates ints
+# wyhash = "0.5.0" # only generates ints
+# sdl2 = "0.34.3"   # for a live preview in a sdl2 canvas
+# pbr = "1.0.4"     # progress bar during render
 image = "0.23.14" # for writing the output image

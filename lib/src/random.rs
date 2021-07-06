@@ -3,6 +3,15 @@
 use num::traits::Float;
 use rand::prelude::*;
 
+// use rand_core::RngCore;
+// use wyhash::WyRng;
+
+// /// Generate a random number in the range [0..1).  Generic over Floats.
+// pub fn random_float<T: Float>() -> T {
+//     let mut rng = WyRng::default();
+//     T::from(rng.next_u64()).unwrap()
+// }
+
 /// Generate a random number in the range [0..1).  Generic over Floats.
 pub fn random_float<T: Float>() -> T {
     let mut rng = rand::thread_rng();
