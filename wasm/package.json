@@ -1,0 +1,7 @@
+{
+  "name": "wasm",
+  "version": "1.0.0",
+  "main": "wasm-node.js",
+  "license": "MIT",
+  "type":"module"
+}

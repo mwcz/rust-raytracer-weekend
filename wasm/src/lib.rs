@@ -1,5 +1,7 @@
 mod utils;
 
+use js_sys::Uint8ClampedArray;
+use rtw;
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -9,11 +11,8 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
-
-#[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, wasm!");
+pub fn render() -> Vec<u8> {
+    unsafe {
+        Uint8ClampedArray::from(rtw::render());
+    }
 }

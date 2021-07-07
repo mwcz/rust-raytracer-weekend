@@ -33,7 +33,7 @@ pub fn write(image_data: FinalImage) {
     }
 }
 
-fn get_color_u8(pixel_color: &Color<f64>, samples_per_pixel: i32) -> Color<u8> {
+pub fn get_color_u8(pixel_color: &Color<f64>, samples_per_pixel: i32) -> Color<u8> {
     let scale = 1.0 / (samples_per_pixel as f64);
     // sqrt applies gamma 2, ie raising the color to the power of 1/gamma, where gamma is 2.
     let r = 256.0 * clamp(pixel_color.x * scale, 0.0, 0.999).sqrt();
