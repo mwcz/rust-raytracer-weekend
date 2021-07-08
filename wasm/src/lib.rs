@@ -12,7 +12,8 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 pub fn render() -> Vec<u8> {
-    unsafe {
-        Uint8ClampedArray::from(rtw::render());
-    }
+    rtw::render()
+    // unsafe {
+    //     Uint8ClampedArray::from(rtw::render());
+    // }
 }

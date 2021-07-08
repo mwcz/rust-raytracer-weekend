@@ -21,4 +21,19 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 wasm-bindgen-test = "0.3.13"
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+# wasm-opt = ['-O'] # 2274ms
+# wasm-opt = ['-O1'] # 2479ms
+# wasm-opt = ['-O2'] # 2257ms
+# wasm-opt = ['-O3'] # 2450ms
+# wasm-opt = ['-O4'] # 2550ms-2900ms
+# wasm-opt = ['-Os'] # 2550ms-2900ms
+# wasm-opt = ['-O2']
+
+[package.metadata.wasm-pack.profile.release.wasm-bindgen]
+debug-js-glue = false
+demangle-name-section = true
+dwarf-debug-info = false

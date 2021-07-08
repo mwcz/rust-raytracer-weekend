@@ -9,7 +9,9 @@ edition = "2018"
 [dependencies]
 num = "0.3"       # for numeric generics
 rand = "0.8.4"
+# rand = { version = "0.7", default-features = false }
 getrandom = { version = "0.2", features = ["js"] }
+lazy_static = "1.4.0"
 # rand_core = "0.6.3" # only generates ints
 # wyhash = "0.5.0" # only generates ints
 # sdl2 = "0.34.3"   # for a live preview in a sdl2 canvas

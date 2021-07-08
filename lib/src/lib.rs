@@ -8,12 +8,39 @@ pub mod scenes;
 pub mod vec;
 pub mod write;
 
+use lazy_static::lazy_static;
 use num::traits::Float;
 use std::rc::Rc;
+use std::sync::Mutex;
+
+// lazy_static! {
+//     static ref RNG: Mutex<u128> = Mutex::new(0xda942042e4dd58b5);
+// }
+
+// __uint128_t g_lehmer64_state;
+
+// uint64_t lehmer64() {
+//   g_lehmer64_state *= 0xda942042e4dd58b5;
+//   return g_lehmer64_state >> 64;
+// }
+
+// fn gen() -> Result<u128> {
+//     let mut db = FRUIT.lock().map_err(|_| "Failed to acquire MutexGuard")?;
+//     db.push(fruit.to_string());
+//     Ok(())
+// }
 
 /// Example render.
 // pub fn render() -> Vec<vec::Vec3<f64>> {
 pub fn render() -> Vec<u8> {
+    // let rng = RNG.lock().map_err(|_| "Failed to acquire RNG mutex");
+    // rng.iter()
+    //     .enumerate()
+    //     .for_each(|(i, item)| println!("{}: {}", i, item));
+    // match rng {
+    //     Ok(n) => println!("{}", n),
+    //     Err(e) => println!("nothing"),
+    // }
     // Configuration
 
     // let aspect_ratio = 3.0 / 2.0;
@@ -23,10 +50,10 @@ pub fn render() -> Vec<u8> {
     // let max_depth = 10;
 
     let aspect_ratio = 3.0 / 2.0;
-    let width = 100.0;
+    let width = 300.0;
     let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 4;
-    let max_depth = 2;
+    let samples_per_pixel: i32 = 10;
+    let max_depth = 3;
 
     // World
 
@@ -69,7 +96,7 @@ pub fn render() -> Vec<u8> {
         vec::Vec3 {
             x: 0.0,
             y: 0.0,
-            z: 0.0
+            z: 0.0,
         };
         (width * height) as usize
     ];
@@ -116,7 +143,7 @@ pub fn render() -> Vec<u8> {
         }
     }
 
-    let mut raw_pixels = vec![0u8; (3.0 * width * height) as usize];
+    let mut raw_pixels = vec![0u8; (4.0 * width * height) as usize];
 
     let mut i: usize = 0;
     for p in pixels {
@@ -124,7 +151,8 @@ pub fn render() -> Vec<u8> {
         raw_pixels[i + 0] = color.x;
         raw_pixels[i + 1] = color.y;
         raw_pixels[i + 2] = color.z;
-        i += 3;
+        raw_pixels[i + 3] = 255;
+        i += 4;
     }
 
     raw_pixels
