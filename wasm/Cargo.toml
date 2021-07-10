@@ -15,6 +15,7 @@ wasm-bindgen = "0.2.63"
 js-sys = "0.3.51"
 rtw = { path = "../lib", version = "0.1.0" }
 console_error_panic_hook = { version = "0.1.6", optional = true }
+
 # wee_alloc = { version = "0.4.5", optional = true }
 
 [dev-dependencies]
@@ -25,13 +26,6 @@ wasm-bindgen-test = "0.3.13"
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false
-# wasm-opt = ['-O'] # 2274ms
-# wasm-opt = ['-O1'] # 2479ms
-# wasm-opt = ['-O2'] # 2257ms
-# wasm-opt = ['-O3'] # 2450ms
-# wasm-opt = ['-O4'] # 2550ms-2900ms
-# wasm-opt = ['-Os'] # 2550ms-2900ms
-# wasm-opt = ['-O2']
 
 [package.metadata.wasm-pack.profile.release.wasm-bindgen]
 debug-js-glue = false
