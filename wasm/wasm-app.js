@@ -1,41 +1,65 @@
-import init, {render} from "./pkg/wasm.js";
+// import init, {render} from "./pkg/wasm.js";
+import "./rtw-timer.js";
 
 const btn = document.querySelector("button");
+const canvas = document.querySelector('canvas');
+const timers = document.querySelector("#timers");
+let timer;
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+canvas.width = 3 * 100;
+canvas.height = 3 * 66;
+const ctx = canvas.getContext('2d');
+
+const worker = new Worker('wasm-worker.js', {type: "module"});
+worker.addEventListener('message', async e => {
+    if (e.data.status === "success") {
+        drawImage(e.data.data);
+    } else if (e.data.status === "error") {
+        // error status probably indicates firefox's lack of support for module
+        // workers, so import the renderer directly and run it on the main
+        // thread.
+
+        // timer won't tick up anymore, so indicate that things will be block
+        timer.pause();
+        timer.setLabel("Web Worker failed, running on the main thread...");
+
+        const {wasmRender} = await import("./wasm-render.js");
+        drawImage(await wasmRender());
+
+        // restart the timer and step it once to update the total running time
+        timer.start();
+        timer.step();
+    }
+    timer.stop();
+});
+
+/**
+ * Begin the rendering, including starting a timer widget, starting render
+ * within the wasm module, and writing the render result into the canvas.
+ */
+function startRender() {
+    timer = addTimer();
+    clearImage();
+    timer.start();
+    worker.postMessage('render');
 }
 
-async function run() {
+function addTimer() {
+    const newTimer = document.createElement("rtw-timer");
+    const li = document.createElement("li");
+    li.appendChild(newTimer);
+    timers.prepend(li);
+    return newTimer;
+}
 
-    const canvas = document.querySelector('canvas');
-    canvas.width = 3 * 100;
-    canvas.height = 3 * 66;
-    const ctx = canvas.getContext('2d');
-
-    console.time("init");
-    await init();
-    console.timeEnd("init");
-
-    console.time("tracing rays");
-    const pixels = new ImageData(new Uint8ClampedArray(render()), 300);
-    window.pixels = pixels;
-    // const pixels = render();
-    console.timeEnd("tracing rays");
-
+function drawImage(imageData) {
     console.time("drawing canvas");
-    ctx.putImageData(pixels, 0, 0);
-    // let x = 0;
-    // let y = 0;
-    // var i4 = 0;
-    // for (var i = 0; i < pixels.length; i += 1, i4 += 4) {
-    //     y = Math.floor((i4) / 100);
-    //     x = Math.floor((i4) % 100);
-    //     ctx.fillStyle = `rgba(${pixels[i4]}, ${pixels[i4 + 1]}, ${pixels[i4 + 2]})`;
-    //     ctx.fillRect(x * dpr, y * dpr, dpr, dpr);
-    // }
+    ctx.putImageData(imageData, 0, 0);
     console.timeEnd("drawing canvas");
-
 }
 
-btn.addEventListener("click", run);
+function clearImage() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+btn.addEventListener("click", startRender);
