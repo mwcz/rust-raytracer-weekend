@@ -1,21 +1,27 @@
 // A small collection of random number convenience functions.
 
+use crate::RNG;
 use num::traits::Float;
-use rand::prelude::*;
-
-// use rand_core::RngCore;
-// use wyhash::WyRng;
-
-// /// Generate a random number in the range [0..1).  Generic over Floats.
-// pub fn random_float<T: Float>() -> T {
-//     let mut rng = WyRng::default();
-//     T::from(rng.next_u64()).unwrap()
-// }
 
 /// Generate a random number in the range [0..1).  Generic over Floats.
 pub fn random_float<T: Float>() -> T {
-    let mut rng = rand::thread_rng();
-    T::from(rng.gen::<f64>()).unwrap()
+    let mut num: u64;
+    {
+        // scope controls when the RNG mutex is released
+        let mut rng = RNG
+            .lock()
+            .map_err(|_| "Failed to acquire RNG mutex")
+            .unwrap();
+
+        *rng *= 0xda942042e4dd58b5;
+        num = *rng;
+    }
+
+    num >>= 32;
+
+    let num = (num as f32) / 2f32.powi(32);
+
+    T::from(num).unwrap()
 }
 
 /// Generate a random number in the range [min..max) based on the given min and max values.  Generic over Floats.

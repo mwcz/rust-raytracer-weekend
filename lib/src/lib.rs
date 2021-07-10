@@ -10,37 +10,17 @@ pub mod write;
 
 use lazy_static::lazy_static;
 use num::traits::Float;
+use std::num::Wrapping;
 use std::rc::Rc;
 use std::sync::Mutex;
 
-// lazy_static! {
-//     static ref RNG: Mutex<u128> = Mutex::new(0xda942042e4dd58b5);
-// }
-
-// __uint128_t g_lehmer64_state;
-
-// uint64_t lehmer64() {
-//   g_lehmer64_state *= 0xda942042e4dd58b5;
-//   return g_lehmer64_state >> 64;
-// }
-
-// fn gen() -> Result<u128> {
-//     let mut db = FRUIT.lock().map_err(|_| "Failed to acquire MutexGuard")?;
-//     db.push(fruit.to_string());
-//     Ok(())
-// }
+lazy_static! {
+    static ref RNG: Mutex<u64> = Mutex::new(0xda942042e4dd58b5);
+}
 
 /// Example render.
 // pub fn render() -> Vec<vec::Vec3<f64>> {
 pub fn render() -> Vec<u8> {
-    // let rng = RNG.lock().map_err(|_| "Failed to acquire RNG mutex");
-    // rng.iter()
-    //     .enumerate()
-    //     .for_each(|(i, item)| println!("{}: {}", i, item));
-    // match rng {
-    //     Ok(n) => println!("{}", n),
-    //     Err(e) => println!("nothing"),
-    // }
     // Configuration
 
     // let aspect_ratio = 3.0 / 2.0;
@@ -52,8 +32,8 @@ pub fn render() -> Vec<u8> {
     let aspect_ratio = 3.0 / 2.0;
     let width = 300.0;
     let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 10;
-    let max_depth = 3;
+    let samples_per_pixel: i32 = 20;
+    let max_depth = 10;
 
     // World
 
