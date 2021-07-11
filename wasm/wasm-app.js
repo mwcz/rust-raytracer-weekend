@@ -10,10 +10,18 @@ canvas.width = 3 * 100;
 canvas.height = 3 * 66;
 const ctx = canvas.getContext('2d');
 
-const worker = new Worker('wasm-worker.js', {type: "module"});
+// calculate the URL of the worker as being relative to this file
+const workerUrl = new URL(`${import.meta.url}/../wasm-worker.js`);
+const worker = new Worker(workerUrl.href, {type: "module"});
+worker.postMessage("init");
+
 worker.addEventListener('message', async e => {
     if (e.data.status === "success") {
-        drawImage(e.data.data);
+        if (e.data.data.imageData) {
+            drawImage(e.data.data.imageData);
+        } else if (e.data.data.initialized) {
+            btn.disabled = false;
+        }
     } else if (e.data.status === "error") {
         // error status probably indicates firefox's lack of support for module
         // workers, so import the renderer directly and run it on the main
@@ -30,7 +38,7 @@ worker.addEventListener('message', async e => {
         timer.start();
         timer.step();
     }
-    timer.stop();
+    timer && timer.stop();
 });
 
 /**

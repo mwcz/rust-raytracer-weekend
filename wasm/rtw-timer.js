@@ -7,7 +7,7 @@ export default class Timer extends HTMLElement {
 
         this.shadowRoot.innerHTML = `
         <label>
-            <meter low=30 high=60 value=0 max=100></meter>
+            <meter optimum=0 low=500 high=1000 value=0 max=1500></meter>
             <span id="label-text"></span>
         </label>
         `;
@@ -34,10 +34,10 @@ export default class Timer extends HTMLElement {
 
     step() {
         if (this.active && !this.paused) {
-            requestAnimationFrame(this.step);
             const diff = performance.now() - this.startTime;
             this.setLabel(`${diff.toFixed(2)}ms`);
-            this.meter.value = diff / 10;
+            this.meter.value = diff;
+            requestAnimationFrame(this.step);
         }
     }
 

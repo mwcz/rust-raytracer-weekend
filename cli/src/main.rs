@@ -1,5 +1,5 @@
 use num::traits::Float;
-use pbr::ProgressBar;
+// use pbr::ProgressBar;
 use rtw::random::random_float;
 
 use rtw::camera::Camera;
@@ -25,7 +25,7 @@ fn render() {
     let max_depth = 10;
 
     // Progress bar
-    let mut pb = ProgressBar::new((width * height) as u64);
+    // let mut pb = ProgressBar::new((width * height) as u64);
 
     // World
 
@@ -113,7 +113,7 @@ fn render() {
 
             i += 1;
 
-            pb.inc();
+            // pb.inc();
         }
     }
 
@@ -124,7 +124,7 @@ fn render() {
         samples_per_pixel,
     });
 
-    pb.finish_print("Done!");
+    // pb.finish_print("Done!");
 }
 
 fn main() {
