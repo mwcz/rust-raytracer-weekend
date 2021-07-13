@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "main": "wasm-node.js",
   "license": "MIT",
-  "type":"module"
+  "type": "module",
+  "dependencies": {
+    "zooming": "^2.1.1"
+  }
 }

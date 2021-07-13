@@ -19,10 +19,10 @@ fn render() {
     // Configuration
 
     let aspect_ratio = 3.0 / 2.0;
-    let width = 300.0;
+    let width = 100.0;
     let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 20;
-    let max_depth = 10;
+    let samples_per_pixel: i32 = 4;
+    let max_depth = 2;
 
     // Progress bar
     // let mut pb = ProgressBar::new((width * height) as u64);

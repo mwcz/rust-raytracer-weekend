@@ -15,7 +15,7 @@ export async function wasmRender() {
     const pixels = render();
     console.timeEnd("tracing rays");
 
-    return new ImageData(new Uint8ClampedArray(pixels), 300);
+    return new ImageData(new Uint8ClampedArray(pixels), 500);
 }
 
 /**

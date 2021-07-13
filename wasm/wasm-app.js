@@ -1,13 +1,15 @@
 // import init, {render} from "./pkg/wasm.js";
 import "./rtw-timer.js";
+import Zooming from "zooming";
 
 const btn = document.querySelector("button");
 const canvas = document.querySelector('canvas');
+const img = document.querySelector('img');
 const timers = document.querySelector("#timers");
 let timer;
 
-canvas.width = 3 * 100;
-canvas.height = 3 * 66;
+canvas.width = 5 * 100;
+canvas.height = canvas.width * 2 / 3;
 const ctx = canvas.getContext('2d');
 
 // calculate the URL of the worker as being relative to this file
@@ -47,7 +49,7 @@ worker.addEventListener('message', async e => {
  */
 function startRender() {
     timer = addTimer();
-    clearImage();
+    // clearImage();
     timer.start();
     worker.postMessage('render');
 }
@@ -64,6 +66,7 @@ function drawImage(imageData) {
     console.time("drawing canvas");
     ctx.putImageData(imageData, 0, 0);
     console.timeEnd("drawing canvas");
+    img.src = canvas.toDataURL();
 }
 
 function clearImage() {
@@ -71,3 +74,5 @@ function clearImage() {
 }
 
 btn.addEventListener("click", startRender);
+
+new Zooming({}).listen('.zoomable')
