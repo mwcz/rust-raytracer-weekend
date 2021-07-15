@@ -34,14 +34,19 @@ export default class Timer extends HTMLElement {
 
     step() {
         if (this.active && !this.paused) {
-            const diff = performance.now() - this.startTime;
-            this.setLabel(`${diff.toFixed(2)}ms`);
-            this.meter.value = diff;
+            this._updateLabel();
             requestAnimationFrame(this.step);
         }
     }
 
+    _updateLabel() {
+        const diff = performance.now() - this.startTime;
+        this.setLabel(`${diff.toFixed(2)}ms`);
+        this.meter.value = diff;
+    }
+
     stop() {
+        this._updateLabel();
         this.active = false;
     }
 

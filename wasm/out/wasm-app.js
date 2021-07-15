@@ -1,113 +1,3 @@
-var __defProp = Object.defineProperty;
-var __markAsModule = (target2) => __defProp(target2, "__esModule", { value: true });
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[Object.keys(fn)[0]])(fn = 0)), res;
-};
-var __export = (target2, all) => {
-  __markAsModule(target2);
-  for (var name in all)
-    __defProp(target2, name, { get: all[name], enumerable: true });
-};
-
-// pkg/wasm.js
-function getInt32Memory0() {
-  if (cachegetInt32Memory0 === null || cachegetInt32Memory0.buffer !== wasm.memory.buffer) {
-    cachegetInt32Memory0 = new Int32Array(wasm.memory.buffer);
-  }
-  return cachegetInt32Memory0;
-}
-function getUint8Memory0() {
-  if (cachegetUint8Memory0 === null || cachegetUint8Memory0.buffer !== wasm.memory.buffer) {
-    cachegetUint8Memory0 = new Uint8Array(wasm.memory.buffer);
-  }
-  return cachegetUint8Memory0;
-}
-function getArrayU8FromWasm0(ptr, len) {
-  return getUint8Memory0().subarray(ptr / 1, ptr / 1 + len);
-}
-function render() {
-  try {
-    const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-    wasm.render(retptr);
-    var r0 = getInt32Memory0()[retptr / 4 + 0];
-    var r1 = getInt32Memory0()[retptr / 4 + 1];
-    var v0 = getArrayU8FromWasm0(r0, r1).slice();
-    wasm.__wbindgen_free(r0, r1 * 1);
-    return v0;
-  } finally {
-    wasm.__wbindgen_add_to_stack_pointer(16);
-  }
-}
-async function load(module, imports) {
-  if (typeof Response === "function" && module instanceof Response) {
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-      try {
-        return await WebAssembly.instantiateStreaming(module, imports);
-      } catch (e) {
-        if (module.headers.get("Content-Type") != "application/wasm") {
-          console.warn("`WebAssembly.instantiateStreaming` failed because your server does not serve wasm with `application/wasm` MIME type. Falling back to `WebAssembly.instantiate` which is slower. Original error:\n", e);
-        } else {
-          throw e;
-        }
-      }
-    }
-    const bytes = await module.arrayBuffer();
-    return await WebAssembly.instantiate(bytes, imports);
-  } else {
-    const instance = await WebAssembly.instantiate(module, imports);
-    if (instance instanceof WebAssembly.Instance) {
-      return { instance, module };
-    } else {
-      return instance;
-    }
-  }
-}
-async function init4(input) {
-  if (typeof input === "undefined") {
-    input = new URL("wasm_bg.wasm", import.meta.url);
-  }
-  const imports = {};
-  if (typeof input === "string" || typeof Request === "function" && input instanceof Request || typeof URL === "function" && input instanceof URL) {
-    input = fetch(input);
-  }
-  const { instance, module } = await load(await input, imports);
-  wasm = instance.exports;
-  init4.__wbindgen_wasm_module = module;
-  return wasm;
-}
-var wasm, cachegetInt32Memory0, cachegetUint8Memory0, wasm_default;
-var init_wasm = __esm({
-  "pkg/wasm.js"() {
-    cachegetInt32Memory0 = null;
-    cachegetUint8Memory0 = null;
-    wasm_default = init4;
-  }
-});
-
-// wasm-render.js
-var wasm_render_exports = {};
-__export(wasm_render_exports, {
-  wasmInit: () => wasmInit,
-  wasmRender: () => wasmRender
-});
-async function wasmRender() {
-  console.time("tracing rays");
-  const pixels = render();
-  console.timeEnd("tracing rays");
-  return new ImageData(new Uint8ClampedArray(pixels), 500);
-}
-async function wasmInit() {
-  console.time("init");
-  await wasm_default();
-  console.timeEnd("init");
-}
-var init_wasm_render = __esm({
-  "wasm-render.js"() {
-    init_wasm();
-    console.log("wasm-render module");
-  }
-});
-
 // rtw-timer.js
 var Timer = class extends HTMLElement {
   constructor() {
@@ -139,13 +29,17 @@ var Timer = class extends HTMLElement {
   }
   step() {
     if (this.active && !this.paused) {
-      const diff = performance.now() - this.startTime;
-      this.setLabel(`${diff.toFixed(2)}ms`);
-      this.meter.value = diff;
+      this._updateLabel();
       requestAnimationFrame(this.step);
     }
   }
+  _updateLabel() {
+    const diff = performance.now() - this.startTime;
+    this.setLabel(`${diff.toFixed(2)}ms`);
+    this.meter.value = diff;
+  }
   stop() {
+    this._updateLabel();
     this.active = false;
   }
   setLabel(msg) {
@@ -784,35 +678,63 @@ var btn = document.querySelector("button");
 var canvas = document.querySelector("canvas");
 var img = document.querySelector("img");
 var timers = document.querySelector("#timers");
-var timer;
+var timer = addTimer();
 canvas.width = 5 * 100;
 canvas.height = canvas.width * 2 / 3;
 var ctx = canvas.getContext("2d");
+var moduleWorkerSupported = true;
 var workerUrl = new URL(`${import.meta.url}/../wasm-worker.js`);
 var worker = new Worker(workerUrl.href, { type: "module" });
-worker.postMessage("init");
+var wasmInit;
+var wasmRender;
+async function preRender() {
+  timer = addTimer();
+  timer.start();
+}
+async function render() {
+  console.log(`starting render ${["ON", "OFF"][~~moduleWorkerSupported]} the main thread`);
+  if (moduleWorkerSupported) {
+    worker.postMessage("render");
+  } else {
+    postRender(await wasmRender());
+  }
+}
+function postRender(imageData) {
+  console.time("drawing canvas");
+  ctx.putImageData(imageData, 0, 0);
+  console.timeEnd("drawing canvas");
+  console.time("copying canvas to image");
+  img.src = canvas.toDataURL();
+  console.timeEnd("copying canvas to image");
+  timer.step();
+  timer.stop();
+}
 worker.addEventListener("message", async (e) => {
   if (e.data.status === "success") {
     if (e.data.data.imageData) {
-      drawImage(e.data.data.imageData);
+      postRender(e.data.data.imageData);
     } else if (e.data.data.initialized) {
       btn.disabled = false;
     }
   } else if (e.data.status === "error") {
-    timer.pause();
-    timer.setLabel("Web Worker failed, running on the main thread...");
-    const { wasmRender: wasmRender2 } = await Promise.resolve().then(() => (init_wasm_render(), wasm_render_exports));
-    drawImage(await wasmRender2());
-    timer.start();
-    timer.step();
+    console.log(`web worker error type: ${e.data.data.type}`);
+    if (e.data.data.type === "import") {
+      moduleWorkerSupported = false;
+      btn.disabled = false;
+      const wasmModule = await import("./wasm-render.js");
+      wasmInit = wasmModule.wasmInit;
+      wasmRender = wasmModule.wasmRender;
+      await wasmInit();
+      timer.pause();
+      timer.setLabel("Module worker not supported in this browser; running on the main thread (expect lockup during render).");
+    }
+    if (e.data.data.type === "render") {
+      timer.pause();
+      timer.setLabel("Error occurred in worker during rendering.");
+    }
   }
-  timer && timer.stop();
 });
-function startRender() {
-  timer = addTimer();
-  timer.start();
-  worker.postMessage("render");
-}
+worker.postMessage("init");
 function addTimer() {
   const newTimer = document.createElement("rtw-timer");
   const li = document.createElement("li");
@@ -820,11 +742,8 @@ function addTimer() {
   timers.prepend(li);
   return newTimer;
 }
-function drawImage(imageData) {
-  console.time("drawing canvas");
-  ctx.putImageData(imageData, 0, 0);
-  console.timeEnd("drawing canvas");
-  img.src = canvas.toDataURL();
-}
-btn.addEventListener("click", startRender);
+btn.addEventListener("click", () => {
+  preRender();
+  render();
+});
 new zooming_module_default({}).listen(".zoomable");
