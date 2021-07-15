@@ -25,8 +25,8 @@ wasm-bindgen-test = "0.3.13"
 [profile.release]
 # opt-level = 3
 
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+# [package.metadata.wasm-pack.profile.release]
+# wasm-opt = false
 
 [package.metadata.wasm-pack.profile.release.wasm-bindgen]
 debug-js-glue = false
