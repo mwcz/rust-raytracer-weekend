@@ -30,9 +30,9 @@ pub fn scene() -> HittableList<f64> {
 
     let ground_material = Rc::new(material::Lambertian {
         albedo: Color {
-            x: 128.0 / 255.0,
-            y: 128.0 / 255.0,
-            z: 128.0 / 255.0,
+            x: 28.0 / 255.0,
+            y: 28.0 / 255.0,
+            z: 28.0 / 255.0,
         },
     });
 
