@@ -16,28 +16,38 @@ use std::rc::Rc;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn render() {
-    // Configuration
-
-    let aspect_ratio = 3.0 / 2.0;
-    let width = 100.0;
-    let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 4;
-    let max_depth = 2;
-
     // Progress bar
     // let mut pb = ProgressBar::new((width * height) as u64);
+
+    // Configuration
+
+    // let aspect_ratio = 3.0 / 2.0;
+    // let width = 400.0;
+    // let height = (width / aspect_ratio).floor();
+    // let samples_per_pixel: i32 = 100;
+    // let max_depth = 10;
+
+    let aspect_ratio = 3.0 / 2.0;
+    let width = 500.0;
+    let height = (width / aspect_ratio).floor();
+
+    // let samples_per_pixel: i32 = 100;
+    // let max_depth = 25;
+
+    let samples_per_pixel: i32 = 20;
+    let max_depth = 5;
 
     // World
 
     // let world = Scenes::random_scene::scene();
     // let world = Scenes::ten_spheres::scene();
-    let world = Scenes::glass_sphere_scene::scene();
+    let world = Scenes::three_sphere_scene::scene();
 
     // Camera
 
     let lookfrom = Point3 {
         x: 0.0,
-        y: 0.5,
+        y: 1.5,
         z: 4.0,
     };
     let lookat = Point3 {
@@ -68,7 +78,7 @@ fn render() {
         Vec3 {
             x: 0.0,
             y: 0.0,
-            z: 0.0
+            z: 0.0,
         };
         (width * height) as usize
     ];
@@ -111,9 +121,8 @@ fn render() {
                 *p += ray.color(&mut rec, &world, max_depth);
             }
 
-            i += 1;
-
             // pb.inc();
+            i += 1;
         }
     }
 

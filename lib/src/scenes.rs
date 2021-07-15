@@ -6,3 +6,6 @@ pub mod ten_spheres;
 
 /// A scene with one glass sphere.
 pub mod glass_sphere_scene;
+
+/// A simple scene with three spheres.
+pub mod three_sphere_scene;

@@ -39,21 +39,25 @@ pub fn render() -> Vec<u8> {
     let aspect_ratio = 3.0 / 2.0;
     let width = 500.0;
     let height = (width / aspect_ratio).floor();
-    let samples_per_pixel: i32 = 16;
-    let max_depth = 8;
+
+    // let samples_per_pixel: i32 = 100;
+    // let max_depth = 25;
+
+    let samples_per_pixel: i32 = 10;
+    let max_depth = 5;
 
     // World
 
     // let world = Scenes::random_scene::scene();
     // let world = Scenes::ten_spheres::scene();
-    let world = Scenes::ten_spheres::scene();
+    let world = Scenes::three_sphere_scene::scene();
 
     // Camera
 
     let lookfrom = Point3 {
         x: 0.0,
-        y: 0.5,
-        z: 4.0,
+        y: 1.8,
+        z: 1.4,
     };
     let lookat = Point3 {
         x: 0.0,

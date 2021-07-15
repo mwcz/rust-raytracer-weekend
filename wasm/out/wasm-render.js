@@ -48,7 +48,7 @@ async function load(module, imports) {
   } else {
     const instance = await WebAssembly.instantiate(module, imports);
     if (instance instanceof WebAssembly.Instance) {
-      return { instance, module };
+      return {instance, module};
     } else {
       return instance;
     }
@@ -62,7 +62,7 @@ async function init(input) {
   if (typeof input === "string" || typeof Request === "function" && input instanceof Request || typeof URL === "function" && input instanceof URL) {
     input = fetch(input);
   }
-  const { instance, module } = await load(await input, imports);
+  const {instance, module} = await load(await input, imports);
   wasm = instance.exports;
   init.__wbindgen_wasm_module = module;
   return wasm;

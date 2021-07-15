@@ -2,7 +2,7 @@
 var Timer = class extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
+    this.attachShadow({mode: "open"});
     this.active = false;
     this.paused = false;
     this.shadowRoot.innerHTML = `
@@ -46,6 +46,7 @@ var Timer = class extends HTMLElement {
     this.labelText.innerText = msg;
   }
 };
+var rtw_timer_default = Timer;
 customElements.define("rtw-timer", Timer);
 
 // node_modules/zooming/build/zooming.module.js
@@ -58,7 +59,7 @@ var cursor = {
 };
 function listen(el, event, handler2) {
   var add = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : true;
-  var options = { passive: false };
+  var options = {passive: false};
   if (add) {
     el.addEventListener(event, handler2, options);
   } else {
@@ -374,7 +375,7 @@ var target = {
   },
   zoomOut: function zoomOut() {
     this.el.offsetWidth;
-    setStyle(this.el, { transform: "none" });
+    setStyle(this.el, {transform: "none"});
   },
   grab: function grab(x, y, scaleExtra) {
     var windowCenter = getWindowCenter();
@@ -684,7 +685,7 @@ canvas.height = canvas.width * 2 / 3;
 var ctx = canvas.getContext("2d");
 var moduleWorkerSupported = true;
 var workerUrl = new URL(`${import.meta.url}/../wasm-worker.js`);
-var worker = new Worker(workerUrl.href, { type: "module" });
+var worker = new Worker(workerUrl.href, {type: "module"});
 var wasmInit;
 var wasmRender;
 async function preRender() {

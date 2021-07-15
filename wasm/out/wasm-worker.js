@@ -9,18 +9,18 @@ addEventListener("message", async (e) => {
       wasmRender = module.wasmRender;
       await module.wasmInit();
       initialized = true;
-      postMessage({ status: "success", data: { initialized } });
+      postMessage({status: "success", data: {initialized}});
     } catch (e2) {
       console.error(e2);
-      postMessage({ status: "error", data: { type: "import" }, message: "error occurred during web worker import" });
+      postMessage({status: "error", data: {type: "import"}, message: "error occurred during web worker import"});
     }
   } else if (e.data === "render") {
     try {
       const imageData = await wasmRender();
-      postMessage({ status: "success", data: { initialized, imageData } });
+      postMessage({status: "success", data: {initialized, imageData}});
     } catch (error) {
       console.error(error);
-      postMessage({ status: "error", data: { type: "render", error }, message: "error occurred during render" });
+      postMessage({status: "error", data: {type: "render", error}, message: "error occurred during render"});
     }
   }
 });

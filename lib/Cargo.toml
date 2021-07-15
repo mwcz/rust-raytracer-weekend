@@ -10,3 +10,4 @@ edition = "2018"
 num = "0.3"       # for numeric generics
 lazy_static = "1.4.0"
 image = "0.23.14" # for writing the output image
+spin-sync = "0.3.2"
