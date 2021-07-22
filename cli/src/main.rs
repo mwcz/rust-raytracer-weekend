@@ -1,13 +1,13 @@
 use num::traits::Float;
 // use pbr::ProgressBar;
-use rtw::random::random_float;
+use rtw_lib::random::random_float;
 
-use rtw::camera::Camera;
-use rtw::hit::HitRecord;
-use rtw::material::Lambertian;
-use rtw::scenes as Scenes;
-use rtw::vec::{Color, Point3, Vec3};
-use rtw::write::{png, FinalImage};
+use rtw_lib::camera::Camera;
+use rtw_lib::hit::HitRecord;
+use rtw_lib::material::Lambertian;
+use rtw_lib::scenes as Scenes;
+use rtw_lib::vec::{Color, Point3, Vec3};
+use rtw_lib::write::{png, FinalImage};
 
 use std::rc::Rc;
 

@@ -20,29 +20,12 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let grey_material = Rc::new(material::Lambertian {
-        albedo: Color {
-            x: 255.0 / 255.0,
-            y: 255.0 / 255.0,
-            z: 255.0 / 255.0,
-        },
-    });
-
     let ground_material = Rc::new(material::Lambertian {
         albedo: Color {
             x: 28.0 / 255.0,
             y: 28.0 / 255.0,
             z: 28.0 / 255.0,
         },
-    });
-
-    let metal_material = Rc::new(material::Metal {
-        albedo: Color {
-            x: 64.0 / 255.0,
-            y: 64.0 / 255.0,
-            z: 64.0 / 255.0,
-        },
-        fuzz: 0.1,
     });
 
     let mirror_material = Rc::new(material::Metal {
@@ -52,15 +35,6 @@ pub fn scene() -> HittableList<f64> {
             z: 245.0 / 255.0,
         },
         fuzz: 0.0,
-    });
-
-    let metal_red_material = Rc::new(material::Metal {
-        albedo: Color {
-            x: 208.0 / 255.0,
-            y: 66.0 / 255.0,
-            z: 70.0 / 255.0,
-        },
-        fuzz: 0.3,
     });
 
     // Mirror sphere

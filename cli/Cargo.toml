@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "rtw"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,4 +8,4 @@ edition = "2018"
 [dependencies]
 num = "0.3"       # for numeric generics
 pbr = "1.0.4"     # progress bar during render
-rtw = { path = "../lib", version = "0.1.0" }
+rtw-lib = { path = "../lib", version = "0.1.0" }

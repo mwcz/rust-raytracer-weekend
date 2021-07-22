@@ -9,7 +9,6 @@ pub mod vec;
 pub mod write;
 
 use lazy_static::lazy_static;
-use num::traits::Float;
 // use simple_mutex::Mutex;
 // use std::sync::Mutex;
 use spin_sync::Mutex;

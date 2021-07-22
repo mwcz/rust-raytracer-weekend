@@ -47,7 +47,8 @@ function postRender(imageData) {
     img.src = canvas.toDataURL();
     console.timeEnd("copying canvas to image");
     timer.step();
-    timer.stop()
+    timer.stop();
+    btn.innerText = "Re-render";
 }
 
 
@@ -80,35 +81,10 @@ worker.addEventListener('message', async e => {
             timer.pause();
             timer.setLabel("Error occurred in worker during rendering.");
         }
-        // error status probably indicates firefox's lack of support for module
-        // workers, so import the renderer directly and run it on the main
-        // thread.
-        // render({mainThread: true});
-
-        // timer won't tick up anymore, so indicate that things will be block
-        // if (timer) {
-        //     timer.pause();
-        //     timer.setLabel("Web Worker failed, running on the main thread...");
-        // }
-
-        // console.log('web worker failed, switching to the main thread');
-        // mainThread = true;
-        // let renderModule = await import("./wasm-render.js");
-        // wasmInit = renderModule.wasmInit;
-        // wasmRender = renderModule.wasmRender;
-        // await wasmInit();
-        // btn.disabled = false;
-
-        // if (timer) {
-        //     // restart the timer and step it once to update the total running time
-        //     timer.start();
-        //     timer.step();
-        // }
     }
 });
 
 worker.postMessage("init");
-
 
 function addTimer() {
     const newTimer = document.createElement("rtw-timer");

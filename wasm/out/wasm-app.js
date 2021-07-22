@@ -35,7 +35,7 @@ var Timer = class extends HTMLElement {
   }
   _updateLabel() {
     const diff = performance.now() - this.startTime;
-    this.setLabel(`${diff.toFixed(2)}ms`);
+    this.setLabel(`${diff.toFixed(1)}ms`);
     this.meter.value = diff;
   }
   stop() {
@@ -709,6 +709,7 @@ function postRender(imageData) {
   console.timeEnd("copying canvas to image");
   timer.step();
   timer.stop();
+  btn.innerText = "Re-render";
 }
 worker.addEventListener("message", async (e) => {
   if (e.data.status === "success") {

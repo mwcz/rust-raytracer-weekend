@@ -1,6 +1,6 @@
 mod utils;
 
-use rtw;
+use rtw_lib;
 use wasm_bindgen::prelude::*;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -10,14 +10,14 @@ use wasm_bindgen::prelude::*;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 use num::traits::Float;
-use rtw::random::random_float;
+use rtw_lib::random::random_float;
 
-use rtw::camera::Camera;
-use rtw::hit::HitRecord;
-use rtw::material::Lambertian;
-use rtw::scenes as Scenes;
-use rtw::vec::{Color, Point3, Vec3};
-use rtw::write::png::get_color_u8;
+use rtw_lib::camera::Camera;
+use rtw_lib::hit::HitRecord;
+use rtw_lib::material::Lambertian;
+use rtw_lib::scenes as Scenes;
+use rtw_lib::vec::{Color, Point3, Vec3};
+use rtw_lib::write::png::get_color_u8;
 
 use std::rc::Rc;
 
