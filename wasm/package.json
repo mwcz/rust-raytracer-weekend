@@ -5,6 +5,10 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@patternfly/pfe-collapse": "^1.10.1",
     "zooming": "^2.1.1"
+  },
+  "devDependencies": {
+    "prettier": "2.3.2"
   }
 }
