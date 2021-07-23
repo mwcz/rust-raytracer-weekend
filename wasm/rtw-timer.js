@@ -1,14 +1,19 @@
 export default class Timer extends HTMLElement {
     constructor() {
         super();
-        this.attachShadow({mode: 'open'});
+        this.attachShadow({ mode: "open" });
         this.active = false;
         this.paused = false;
 
         this.shadowRoot.innerHTML = `
+        <style>
+            meter {
+                width: 100%;
+            }
+        </style>
         <label>
-            <meter optimum=0 low=500 high=1000 value=0 max=1500></meter>
-            <span id="label-text"></span>
+            <meter optimum=0 low=800 high=1500 value=0 max=2500></meter>
+            <span id="label-text">&nbsp;</span>
         </label>
         `;
 

@@ -1,5 +1,4 @@
 import "./rtw-timer.js";
-import Zooming from "zooming";
 
 export default class RtwRender extends HTMLElement {
     constructor() {
@@ -8,45 +7,40 @@ export default class RtwRender extends HTMLElement {
         fetch("./wasm_bg.wasm");
         this.shadowRoot.innerHTML = `
             <style>
-                canvas {
-                    display: none;
-                    aspect-ratio: 5/3.33;
+                :host {
+                    display: inline-block;
+                    background-color: var(--rtw-background-color, grey);
+                    padding: 14px;
                 }
-                img {
-                    width: 100%;
+                canvas {
                     aspect-ratio: 5/3.33;
-                    /* height:  calc(66px * 3); */
                     image-rendering: -moz-crisp-edges;
                     image-rendering: -webkit-crisp-edges;
                     image-rendering: pixelated;
                     image-rendering: crisp-edges;
                 }
                 .controls {
+                    margin-top: 8px;
+                    width: 500px;
                     display: grid;
-                    grid-template-columns: 1fr 2fr;
+                    grid-template-columns: 1fr 1fr;
+                    grid-gap: 14px;
                     overflow-y: hidden;
                 }
-                /*
-                #timers { display: none }
-                */
             </style>
 
             <canvas width="500" height="333"></canvas>
-            <img width="500" height="333" class="zoomable" />
             <div class="controls">
-                <button id="do-render" disabled>Render</button>
-                <ol reversed id="timers"></ol>
+                <button disabled>Render</button>
+                <rtw-timer></rtw-timer>
             </div>
         `;
     }
 
     connectedCallback() {
-        this.btnRender = this.shadowRoot.querySelector("button#do-render");
+        this.btn = this.shadowRoot.querySelector("button");
         this.canvas = this.shadowRoot.querySelector("canvas");
-        this.img = this.shadowRoot.querySelector("img");
-        this.timersCollapse = this.shadowRoot.querySelector("pfe-collapse");
-        this.timers = this.shadowRoot.querySelector("#timers");
-        this.timer = this.addTimer();
+        this.timer = this.shadowRoot.querySelector("rtw-timer");
 
         this.ctx = this.canvas.getContext("2d");
         this.moduleWorkerSupported = true;
@@ -56,12 +50,10 @@ export default class RtwRender extends HTMLElement {
         this.wasmInit = null;
         this.wasmRender = null;
 
-        this.btnRender.addEventListener("click", () => {
+        this.btn.addEventListener("click", () => {
             this.preRender();
             this.render();
         });
-
-        new Zooming({}).listen(".zoomable");
     }
 
     createWorker() {
@@ -72,7 +64,7 @@ export default class RtwRender extends HTMLElement {
                 if (e.data.data.imageData) {
                     this.postRender(e.data.data.imageData);
                 } else if (e.data.data.initialized) {
-                    this.btnRender.disabled = false;
+                    this.btn.disabled = false;
                 }
             } else if (e.data.status === "error") {
                 console.log(`web worker error type: ${e.data.data.type}`);
@@ -80,7 +72,7 @@ export default class RtwRender extends HTMLElement {
                     // switch to main thread mode
                     this.moduleWorkerSupported = false;
                     // enable the render button
-                    this.btnRender.disabled = false;
+                    this.btn.disabled = false;
 
                     // initialize wasm
                     const wasmModule = await import("./wasm-render.js");
@@ -111,9 +103,9 @@ export default class RtwRender extends HTMLElement {
      * within the wasm module, and writing the render result into the canvas.
      */
     async preRender() {
-        this.timer = this.addTimer();
         // clearImage();
         this.timer.start();
+        this.btn.disabled = true;
     }
 
     async render() {
@@ -132,20 +124,10 @@ export default class RtwRender extends HTMLElement {
         console.time("drawing canvas");
         this.ctx.putImageData(imageData, 0, 0);
         console.timeEnd("drawing canvas");
-        console.time("copying canvas to image");
-        this.img.src = this.canvas.toDataURL();
-        console.timeEnd("copying canvas to image");
         this.timer.step();
         this.timer.stop();
-        this.btnRender.innerText = "Re-render";
-    }
-
-    addTimer() {
-        const newTimer = document.createElement("rtw-timer");
-        const li = document.createElement("li");
-        li.appendChild(newTimer);
-        this.timers.prepend(li);
-        return newTimer;
+        this.btn.innerText = "Re-render";
+        this.btn.disabled = false;
     }
 }
 

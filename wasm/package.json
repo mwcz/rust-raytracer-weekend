@@ -1,7 +1,8 @@
 {
-  "name": "wasm",
+  "name": "@clayto/rtw-render",
   "version": "1.0.0",
-  "main": "wasm-node.js",
+  "main": "dist/rtw-render.js",
+  "files": ["dist"],
   "license": "MIT",
   "type": "module",
   "dependencies": {
