@@ -4,7 +4,7 @@ export default class RtwRender extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
-        fetch("./wasm_bg.wasm");
+        fetch(`${import.meta.url}/../wasm_bg.wasm`);
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
