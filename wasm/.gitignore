@@ -5,4 +5,5 @@ bin/
 pkg/
 wasm-pack.log
 
+dist
 node_modules
