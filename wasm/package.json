@@ -1,14 +1,10 @@
 {
-  "name": "@clayto/rtw-render",
+  "name": "@mwcz/rtw-render",
   "version": "1.0.0",
   "main": "dist/rtw-render.js",
   "files": ["dist"],
   "license": "MIT",
   "type": "module",
-  "dependencies": {
-    "@patternfly/pfe-collapse": "^1.10.1",
-    "zooming": "^2.1.1"
-  },
   "devDependencies": {
     "prettier": "2.3.2"
   }
