@@ -9,11 +9,11 @@ export default class RtwRender extends HTMLElement {
             <style>
                 :host {
                     display: inline-block;
-                    background-color: var(--rtw-background-color, grey);
+                    background-color: var(--rtw-background-color, black);
                     padding: 14px;
                 }
                 canvas {
-                    aspect-ratio: 5/3.33;
+                    width: 100%;
                     image-rendering: -moz-crisp-edges;
                     image-rendering: -webkit-crisp-edges;
                     image-rendering: pixelated;
@@ -21,11 +21,21 @@ export default class RtwRender extends HTMLElement {
                 }
                 .controls {
                     margin-top: 8px;
-                    width: 500px;
+                    width: 100%;
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     grid-gap: 14px;
-                    overflow-y: hidden;
+                }
+                button {
+                    border: var(--rtw-button-border, 1px solid white);
+                    background: var(--rtw-button-background, black);
+                    color: var(--rtw-button-color, white);
+                }
+                button:hover {
+                    background: var(--rtw-button-background-hover, #1f1f1f);
+                }
+                button:active, button:focus {
+                    background: var(--rtw-button-background-active, #3f3f3f);
                 }
             </style>
 
