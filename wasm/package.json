@@ -8,6 +8,7 @@
   "license": "MIT",
   "type": "module",
   "devDependencies": {
+    "@mwcz/pbp-loading": "^1.0.2",
     "prettier": "2.3.2"
   }
 }

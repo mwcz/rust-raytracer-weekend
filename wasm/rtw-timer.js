@@ -1,26 +1,43 @@
+import "@mwcz/pbp-loading";
+
 export default class Timer extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
+
         this.active = false;
         this.paused = false;
 
+        this.step = this.step.bind(this);
+    }
+
+    connectedCallback() {
         this.shadowRoot.innerHTML = `
         <style>
-            meter {
+            pbp-loading {
                 width: 100%;
+            }
+            label {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-gap: 6px;
             }
         </style>
         <label>
-            <meter optimum=0 low=800 high=1500 value=0 max=2500></meter>
+            <pbp-loading paused duration=0.8 box-count=8></pbp-loading>
             <span id="label-text">&nbsp;</span>
         </label>
         `;
 
         this.labelText = this.shadowRoot.querySelector("#label-text");
-        this.meter = this.shadowRoot.querySelector("meter");
+        this.loading = this.shadowRoot.querySelector("pbp-loading");
+        console.log("loading", this.loading);
+    }
 
-        this.step = this.step.bind(this);
+    resetSpinner() {
+        this.loading.style.removeProperty("--play-state");
+        this.labelText.parentNode.removeChild(this.loading);
+        this.labelText.parentNode.insertBefore(this.loading, this.labelText);
     }
 
     start() {
@@ -30,11 +47,13 @@ export default class Timer extends HTMLElement {
             this.paused = false;
         }
         this.active = true;
+        this.loading.play();
         requestAnimationFrame(this.step);
     }
 
     pause() {
         this.paused = true;
+        this.loading.pause();
     }
 
     step() {
@@ -47,10 +66,10 @@ export default class Timer extends HTMLElement {
     _updateLabel() {
         const diff = performance.now() - this.startTime;
         this.setLabel(`${diff.toFixed(1)}ms`);
-        this.meter.value = diff;
     }
 
     stop() {
+        this.resetSpinner();
         this._updateLabel();
         this.active = false;
     }

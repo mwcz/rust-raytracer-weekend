@@ -2,24 +2,12 @@
 # yarn lockfile v1
 
 
-"@patternfly/pfe-collapse@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@patternfly/pfe-collapse/-/pfe-collapse-1.10.1.tgz#e25191004a360326c5f4ced765f062eaecfecade"
-  integrity sha512-tJNbv+Nuf4iz9oSvX94OM1xmJMNAbRKfmZXg/d6eSX0WR0rv83IpTQQFiSyYk3gb+mtAcPpR8oYbqvRGRScC3A==
-  dependencies:
-    "@patternfly/pfelement" "^1.10.1"
-
-"@patternfly/pfelement@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@patternfly/pfelement/-/pfelement-1.10.1.tgz#d9be420591dd50ffeebe18d0c30cd46265eb5eb0"
-  integrity sha512-5aNviWhTzMXtV1SiKq4FFJs/mGlvA5cgb94eSC09lz2w2XpULZpNXO5tTKTZHSqB7N7gaJ3LGHYwmpsIt9H2Ew==
+"@mwcz/pbp-loading@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@mwcz/pbp-loading/-/pbp-loading-1.0.2.tgz#3a4f5d38c35a949026c2b36e6d2af2bfc58048ce"
+  integrity sha512-FHkBJ54NxCzfH4LlQd9I8FprcAlI1w6yyxDw4zQfOcbb5fcEQyKehjUU3uxR29wp1yWQkHwUlPQJI5+Lu+p40Q==
 
 prettier@2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.3.2.tgz#ef280a05ec253712e486233db5c6f23441e7342d"
   integrity sha512-lnJzDfJ66zkMy58OL5/NY5zp70S7Nz6KqcKkXYzn2tMVrNxvbqaBpg7H3qHaLxCJ5lNMsGuM8+ohS7cZrthdLQ==
-
-zooming@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.npmjs.org/zooming/-/zooming-2.1.1.tgz"
-  integrity sha512-Z38dkZRQsFNBE67+xDBQLNKMs5J1Gc+s3/zO6iezTrC24VYLJV7YPBdBDJmiLhff5qa6Awxv4wsjqx3oYz2MYA==
