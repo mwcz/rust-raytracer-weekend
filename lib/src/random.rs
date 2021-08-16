@@ -15,7 +15,7 @@ pub fn random_float<T: Float>() -> T {
         //     .map_err(|_| "Failed to acquire RNG mutex")
         //     .unwrap();
 
-        *rng *= 0xda942042e4dd58b5;
+        *rng = rng.wrapping_mul(0xda942042e4dd58b5u64);
         num = *rng;
     }
 
