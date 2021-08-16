@@ -1,6 +1,4 @@
-import init, {render} from "./pkg/wasm.js";
-
-console.log("wasm-render module");
+import init, { render } from "./pkg/wasm.js";
 
 /**
  * Initialize wasm module and run the render function.  Embeds the render
