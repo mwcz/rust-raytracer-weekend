@@ -1,4 +1,5 @@
 import "./rtw-timer.js";
+import supportsModuleWorkers from "./caniuse-module-worker.js";
 
 export default class RtwRender extends HTMLElement {
     constructor() {
@@ -13,7 +14,6 @@ export default class RtwRender extends HTMLElement {
                     padding: 14px;
                 }
                 canvas {
-                    width: 100%;
                     image-rendering: -moz-crisp-edges;
                     image-rendering: -webkit-crisp-edges;
                     image-rendering: pixelated;
@@ -37,6 +37,13 @@ export default class RtwRender extends HTMLElement {
                 button:active, button:focus {
                     background: var(--rtw-button-background-active, #3f3f3f);
                 }
+                .log {
+                  display: none;
+                  margin-bottom: 0;
+                }
+                .log.active {
+                  display: block;
+                }
             </style>
 
             <canvas width="500" height="333"></canvas>
@@ -44,24 +51,33 @@ export default class RtwRender extends HTMLElement {
                 <button disabled>Render</button>
                 <rtw-timer></rtw-timer>
             </div>
+            <p class="log"></p>
         `;
     }
 
-    connectedCallback() {
+    async connectedCallback() {
         this.btn = this.shadowRoot.querySelector("button");
         this.canvas = this.shadowRoot.querySelector("canvas");
         this.timer = this.shadowRoot.querySelector("rtw-timer");
+        this.log = this.shadowRoot.querySelector(".log");
 
         this.ctx = this.canvas.getContext("2d");
-        this.moduleWorkerSupported = true;
 
-        this.worker = this.createWorker();
+        if (supportsModuleWorkers()) {
+            console.log("module workers supported, creating worker");
+            this.worker = this.createWorker();
+        } else {
+            console.log(
+                "module workers NOT supported, will render on the main thread"
+            );
+            await this.initMainThreadRendering();
+        }
 
         this.wasmInit = null;
         this.wasmRender = null;
 
-        this.btn.addEventListener("click", () => {
-            this.preRender();
+        this.btn.addEventListener("click", async () => {
+            await this.preRender();
             this.render();
         });
     }
@@ -77,35 +93,31 @@ export default class RtwRender extends HTMLElement {
                     this.btn.disabled = false;
                 }
             } else if (e.data.status === "error") {
-                console.log(`web worker error type: ${e.data.data.type}`);
-                if (e.data.data.type === "import") {
-                    // switch to main thread mode
-                    this.moduleWorkerSupported = false;
-                    // enable the render button
-                    this.btn.disabled = false;
-
-                    // initialize wasm
-                    const wasmModule = await import("./wasm-render.js");
-                    this.wasmInit = wasmModule.wasmInit;
-                    this.wasmRender = wasmModule.wasmRender;
-                    await wasmInit();
-
-                    this.timer.pause();
-                    this.timer.setLabel(
-                        "Module worker not supported in this browser; running on the main thread (expect lockup during render)."
-                    );
-                }
                 if (e.data.data.type === "render") {
                     this.timer.pause();
-                    this.timer.setLabel(
-                        "Error occurred in worker during rendering."
-                    );
+                    this.log.textContent =
+                        "Error occurred in worker during rendering.";
+                    this.log.classList.add("active");
                 }
             }
         });
 
         worker.postMessage("init");
         return worker;
+    }
+
+    async initMainThreadRendering() {
+        // initialize wasm
+        const wasmModule = await import("./wasm-render.js");
+        this.wasmInit = wasmModule.wasmInit;
+        this.wasmRender = wasmModule.wasmRender;
+        await this.wasmInit();
+
+        this.btn.disabled = false;
+
+        this.log.textContent =
+            "Rendering will run on the main thread because Module Workers are not supported in this browser.  Expect lock-up during rendering.";
+        this.log.classList.add("active");
     }
 
     /**
@@ -115,21 +127,28 @@ export default class RtwRender extends HTMLElement {
     async preRender() {
         // clearImage();
         this.timer.start();
+
+        // if running on the main thread, pause the timer, we'll update it once at the end.
+        if (!supportsModuleWorkers()) {
+            // this.timer.pause();
+        }
         this.btn.disabled = true;
     }
 
     async render() {
-        console.log(
-            `starting render ${
-                ["ON", "OFF"][~~this.moduleWorkerSupported]
-            } the main thread`
-        );
-        if (this.moduleWorkerSupported) {
+        if (supportsModuleWorkers()) {
+            console.log("starting render in a module worker");
             this.worker.postMessage("render");
         } else {
-            this.postRender(await this.wasmRender());
+            console.log("starting render on the main thread");
+            if (!this.wasmInit) {
+                await this.initMainThreadRendering();
+            }
+            const imageData = await this.wasmRender();
+            this.postRender(imageData);
         }
     }
+
     postRender(imageData) {
         console.time("drawing canvas");
         this.ctx.putImageData(imageData, 0, 0);

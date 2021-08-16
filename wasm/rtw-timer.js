@@ -31,7 +31,6 @@ export default class Timer extends HTMLElement {
 
         this.labelText = this.shadowRoot.querySelector("#label-text");
         this.loading = this.shadowRoot.querySelector("pbp-loading");
-        console.log("loading", this.loading);
     }
 
     resetSpinner() {
