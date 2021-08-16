@@ -9,11 +9,6 @@ pub fn random_float<T: Float>() -> T {
     {
         // scope controls when the RNG mutex is released
         let mut rng = RNG.lock().unwrap();
-        // let mut rng = RNG.lock();
-        // let mut rng = RNG
-        //     .lock()
-        //     .map_err(|_| "Failed to acquire RNG mutex")
-        //     .unwrap();
 
         *rng = rng.wrapping_mul(0xda942042e4dd58b5u64);
         num = *rng;
