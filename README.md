@@ -8,11 +8,13 @@ It supports command-line and WebAssembly.
 
  - [Shaking off the Rust 1: Ray tracing in One Weekend](https://clayto.com/2021/02/shaking-off-the-rust-1-ray-tracing-in-one-weekend/)
 
-## Some renders
+## Example renders
 
 Here are some renders, some are to document subtle bugs, and some are just to celebrate first successful renders with new features!
 
 
+![](cli/renders/raytrace-1616044535.567072104s.final-book-image-render-15hours.jpg)
+![](./cli/renders/raytrace-1616444535.747858648s.png)
 ![first hires reflective](cli/renders/raytrace-1615001082.58049436s.first-hires-reflective.jpg)
 ![fixed metal reflectance wooooo](cli/renders/raytrace-1614999320.758953735s.fixed-metal-reflectance-wooooo.jpg)
 ![first render with materials and attenuation](cli/renders/raytrace-1614997695.127485347s.first-render-with-materials-and-attenuation.jpg)
