@@ -34,7 +34,7 @@ fn render() {
     // let samples_per_pixel: i32 = 100;
     // let max_depth = 25;
 
-    let samples_per_pixel: i32 = 20;
+    let samples_per_pixel: i32 = 10;
     let max_depth = 5;
 
     // World
@@ -47,8 +47,8 @@ fn render() {
 
     let lookfrom = Point3 {
         x: 0.0,
-        y: 1.5,
-        z: 4.0,
+        y: 1.8,
+        z: 1.4,
     };
     let lookat = Point3 {
         x: 0.0,
