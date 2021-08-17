@@ -160,10 +160,10 @@ Samples per pixel = ❔</p>
 Total duration    = ${this.timer.duration.toFixed(1)} ms
 Time per ray      = ${((this.timer.duration / total_rays) * 1000).toFixed(
             4
-        )} ns/ray
+        )} microseconds/ray
 Ray rate          = ${(total_rays / this.timer.duration / 1000).toFixed(
             4
-        )} rays/ns
+        )} rays/microsecond
 Image width       = ${renderResult.width}
 Image height      = ${renderResult.height}
 Samples per pixel = ${renderResult.samples_per_pixel}`;
