@@ -7,6 +7,24 @@
   resolved "https://registry.yarnpkg.com/@mwcz/pbp-loading/-/pbp-loading-1.0.2.tgz#3a4f5d38c35a949026c2b36e6d2af2bfc58048ce"
   integrity sha512-FHkBJ54NxCzfH4LlQd9I8FprcAlI1w6yyxDw4zQfOcbb5fcEQyKehjUU3uxR29wp1yWQkHwUlPQJI5+Lu+p40Q==
 
+"@patternfly/pfe-number@^1.10.1":
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/pfe-number/-/pfe-number-1.10.1.tgz#b22fba60f644451299203a068e93c6a41689f7c5"
+  integrity sha512-8nXIL0oL77HzGlZwY0wiXQNpu6pyJaFbwb/DJqFZc6BWtFYTHsVDCG8ivporZ58lq1wO0a4OI6g4gp+UNhZ2VA==
+  dependencies:
+    "@patternfly/pfelement" "^1.10.1"
+    numeral "^2.0.6"
+
+"@patternfly/pfelement@^1.10.1":
+  version "1.10.1"
+  resolved "https://registry.yarnpkg.com/@patternfly/pfelement/-/pfelement-1.10.1.tgz#d9be420591dd50ffeebe18d0c30cd46265eb5eb0"
+  integrity sha512-5aNviWhTzMXtV1SiKq4FFJs/mGlvA5cgb94eSC09lz2w2XpULZpNXO5tTKTZHSqB7N7gaJ3LGHYwmpsIt9H2Ew==
+
+numeral@^2.0.6:
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/numeral/-/numeral-2.0.6.tgz#4ad080936d443c2561aed9f2197efffe25f4e506"
+  integrity sha1-StCAk21EPCVhrtnyGX7//iX05QY=
+
 prettier@2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-2.3.2.tgz#ef280a05ec253712e486233db5c6f23441e7342d"

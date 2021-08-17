@@ -8,4 +8,5 @@ pub struct FinalImage {
     pub width: u32,
     pub height: u32,
     pub samples_per_pixel: i32,
+    pub total_rays: u64,
 }

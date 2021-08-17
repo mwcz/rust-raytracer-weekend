@@ -26,6 +26,8 @@ impl<T: Float + Debug> Ray<T> {
     }
 
     pub fn color(&self, rec: &mut HitRecord<T>, world: &HittableList<T>, depth: i32) -> Color<T> {
+        rec.ray_count += 1;
+
         if depth <= 0 {
             return Color::zero();
         }

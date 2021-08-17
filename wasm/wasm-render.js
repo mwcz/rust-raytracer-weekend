@@ -10,10 +10,10 @@ import init, { render } from "./pkg/wasm.js";
  */
 export async function wasmRender() {
     console.time("tracing rays");
-    const pixels = render();
+    const renderResult = render();
     console.timeEnd("tracing rays");
 
-    return new ImageData(new Uint8ClampedArray(pixels), 500);
+    return renderResult;
 }
 
 /**

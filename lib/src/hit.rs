@@ -15,6 +15,7 @@ pub struct HitRecord<T: Float> {
     pub material: Rc<dyn Material<T>>,
     pub t: T,
     pub front_face: bool,
+    pub ray_count: u64,
 }
 
 impl<T: Float> HitRecord<T> {
@@ -25,6 +26,7 @@ impl<T: Float> HitRecord<T> {
             t: T::zero(),
             front_face: false,
             material,
+            ray_count: 0,
         }
     }
 

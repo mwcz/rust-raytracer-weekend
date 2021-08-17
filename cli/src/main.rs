@@ -1,5 +1,5 @@
 use num::traits::Float;
-// use pbr::ProgressBar;
+use pbr::ProgressBar;
 use rtw_lib::random::random_float;
 
 use rtw_lib::camera::Camera;
@@ -16,9 +16,6 @@ use std::rc::Rc;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn render() {
-    // Progress bar
-    // let mut pb = ProgressBar::new((width * height) as u64);
-
     // Configuration
 
     // let aspect_ratio = 3.0 / 2.0;
@@ -30,6 +27,9 @@ fn render() {
     let aspect_ratio = 3.0 / 2.0;
     let width = 500.0;
     let height = (width / aspect_ratio).floor();
+
+    // Progress bar
+    let mut pb = ProgressBar::new((width * height) as u64);
 
     // let samples_per_pixel: i32 = 100;
     // let max_depth = 25;
@@ -92,6 +92,8 @@ fn render() {
         },
     });
 
+    let mut total_rays: u64 = 0;
+
     let mut i: usize = 0;
     for y in (0..(height as i32)).rev() {
         for x in 0..(width as i32) {
@@ -119,21 +121,26 @@ fn render() {
                 let mut rec = HitRecord::new(default_material.clone());
 
                 *p += ray.color(&mut rec, &world, max_depth);
+
+                total_rays += rec.ray_count;
             }
 
-            // pb.inc();
+            pb.inc();
             i += 1;
         }
     }
+
+    println!("Total rays: {}", total_rays);
 
     png::write(FinalImage {
         width: width as u32,
         height: height as u32,
         pixels,
         samples_per_pixel,
+        total_rays,
     });
 
-    // pb.finish_print("Done!");
+    pb.finish_print("Done!");
 }
 
 fn main() {

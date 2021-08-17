@@ -26,10 +26,19 @@ addEventListener("message", async (e) => {
         }
     } else if (e.data === "render") {
         try {
-            const imageData = await wasmRender();
+            const renderResult = await wasmRender();
             postMessage({
                 status: "success",
-                data: { initialized, imageData },
+                data: {
+                    initialized,
+                    renderResult: {
+                        pixels: renderResult.pixels,
+                        total_rays: renderResult.total_rays,
+                        width: renderResult.width,
+                        height: renderResult.height,
+                        samples_per_pixel: renderResult.samples_per_pixel,
+                    },
+                },
             });
         } catch (error) {
             console.error(error);

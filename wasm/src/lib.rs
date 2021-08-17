@@ -21,13 +21,29 @@ use rtw_lib::write::png::get_color_u8;
 
 use std::rc::Rc;
 
+#[wasm_bindgen]
+pub struct WasmFinalImage {
+    pixels: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+    pub samples_per_pixel: i32,
+    pub total_rays: u64,
+}
+
+#[wasm_bindgen]
+impl WasmFinalImage {
+    #[wasm_bindgen(getter)]
+    pub fn pixels(&self) -> js_sys::Uint8ClampedArray {
+        return js_sys::Uint8ClampedArray::from(&self.pixels[..]);
+    }
+}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              MAIN                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Example render.
 #[wasm_bindgen]
-pub fn render() -> Vec<u8> {
+pub fn render() -> WasmFinalImage {
     // Configuration
 
     // let aspect_ratio = 3.0 / 2.0;
@@ -101,6 +117,8 @@ pub fn render() -> Vec<u8> {
         },
     });
 
+    let mut total_rays: u64 = 0;
+
     let mut i: usize = 0;
     for y in (0..(height as i32)).rev() {
         for x in 0..(width as i32) {
@@ -128,6 +146,8 @@ pub fn render() -> Vec<u8> {
                 let mut rec = HitRecord::new(default_material.clone());
 
                 *p += ray.color(&mut rec, &world, max_depth);
+
+                total_rays += rec.ray_count;
             }
 
             i += 1;
@@ -146,5 +166,11 @@ pub fn render() -> Vec<u8> {
         i += 4;
     }
 
-    raw_pixels
+    WasmFinalImage {
+        pixels: raw_pixels,
+        total_rays,
+        width: width as u32,
+        height: height as u32,
+        samples_per_pixel,
+    }
 }

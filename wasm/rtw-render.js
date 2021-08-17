@@ -38,11 +38,9 @@ export default class RtwRender extends HTMLElement {
                     background: var(--rtw-button-background-active, #3f3f3f);
                 }
                 .log {
-                  display: none;
                   margin-bottom: 0;
-                }
-                .log.active {
-                  display: block;
+                  font-family: monospace;
+                  white-space: pre;
                 }
             </style>
 
@@ -51,7 +49,13 @@ export default class RtwRender extends HTMLElement {
                 <button disabled>Render</button>
                 <rtw-timer></rtw-timer>
             </div>
-            <p class="log"></p>
+            <p class="log">Total rays        :
+Total duration    :
+Time per ray      :
+Ray rate          :
+Image width       :
+Image height      :
+Samples per pixel :</p>
         `;
     }
 
@@ -87,8 +91,8 @@ export default class RtwRender extends HTMLElement {
         const worker = new Worker(workerUrl.href, { type: "module" });
         worker.addEventListener("message", async (e) => {
             if (e.data.status === "success") {
-                if (e.data.data.imageData) {
-                    this.postRender(e.data.data.imageData);
+                if (e.data.data.renderResult) {
+                    this.postRender(e.data.data.renderResult);
                 } else if (e.data.data.initialized) {
                     this.btn.disabled = false;
                 }
@@ -97,7 +101,6 @@ export default class RtwRender extends HTMLElement {
                     this.timer.pause();
                     this.log.textContent =
                         "Error occurred in worker during rendering.";
-                    this.log.classList.add("active");
                 }
             }
         });
@@ -117,7 +120,6 @@ export default class RtwRender extends HTMLElement {
 
         this.log.textContent =
             "Rendering will run on the main thread because Module Workers are not supported in this browser.  Expect lock-up during rendering.";
-        this.log.classList.add("active");
     }
 
     /**
@@ -149,12 +151,38 @@ export default class RtwRender extends HTMLElement {
         }
     }
 
-    postRender(imageData) {
+    writeStats(renderResult) {
+        const total_rays = Number(renderResult.total_rays);
+        this.log.textContent = `Total rays        : ${total_rays.toLocaleString(
+            "en-US"
+        )}
+Total duration    : ${this.timer.duration.toFixed(1)} ms
+Time per ray      : ${((this.timer.duration / total_rays) * 1000).toFixed(
+            4
+        )} ns/ray
+Ray rate          : ${(total_rays / this.timer.duration / 1000).toFixed(
+            4
+        )} rays/ns
+Image width       : ${renderResult.width}
+Image height      : ${renderResult.height}
+Samples per pixel : ${renderResult.samples_per_pixel}`;
+    }
+
+    postRender(renderResult) {
         console.time("drawing canvas");
-        this.ctx.putImageData(imageData, 0, 0);
+        this.canvas.width = renderResult.width;
+        this.canvas.height = renderResult.height;
+        this.ctx.putImageData(
+            new ImageData(renderResult.pixels, renderResult.width),
+            0,
+            0
+        );
         console.timeEnd("drawing canvas");
         this.timer.step();
         this.timer.stop();
+
+        this.writeStats(renderResult);
+
         this.btn.innerText = "Re-render";
         this.btn.disabled = false;
     }

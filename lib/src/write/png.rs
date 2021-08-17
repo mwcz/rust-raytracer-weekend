@@ -13,7 +13,10 @@ pub fn write(image_data: FinalImage) {
         .duration_since(time::UNIX_EPOCH)
         .expect("Time went backwards.");
 
-    let filename = format!("raytrace-{:?}.png", since);
+    let filename = format!(
+        "raytrace-raycount-{}-date-{:?}.png",
+        image_data.total_rays, since
+    );
 
     let temp_dir = env::temp_dir();
     let temp_file = temp_dir.join(&filename);
