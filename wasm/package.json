@@ -1,6 +1,6 @@
 {
   "name": "@mwcz/rtw-render",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "main": "dist/rtw-render.js",
   "files": [
     "dist"
@@ -11,6 +11,5 @@
     "@mwcz/pbp-loading": "^1.0.2",
     "prettier": "2.3.2"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
