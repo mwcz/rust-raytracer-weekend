@@ -41,6 +41,7 @@ export default class RtwRender extends HTMLElement {
                   margin-bottom: 0;
                   font-family: monospace;
                   white-space: pre;
+                  line-height: 1.4;
                 }
             </style>
 
@@ -49,13 +50,13 @@ export default class RtwRender extends HTMLElement {
                 <button disabled>Render</button>
                 <rtw-timer></rtw-timer>
             </div>
-            <p class="log">Total rays        :
-Total duration    :
-Time per ray      :
-Ray rate          :
-Image width       :
-Image height      :
-Samples per pixel :</p>
+            <p class="log">Total rays        = ❔
+Total duration    = ❔
+Time per ray      = ❔
+Ray rate          = ❔
+Image width       = ❔
+Image height      = ❔
+Samples per pixel = ❔</p>
         `;
     }
 
@@ -153,19 +154,19 @@ Samples per pixel :</p>
 
     writeStats(renderResult) {
         const total_rays = Number(renderResult.total_rays);
-        this.log.textContent = `Total rays        : ${total_rays.toLocaleString(
+        this.log.textContent = `Total rays        = ${total_rays.toLocaleString(
             "en-US"
         )}
-Total duration    : ${this.timer.duration.toFixed(1)} ms
-Time per ray      : ${((this.timer.duration / total_rays) * 1000).toFixed(
+Total duration    = ${this.timer.duration.toFixed(1)} ms
+Time per ray      = ${((this.timer.duration / total_rays) * 1000).toFixed(
             4
         )} ns/ray
-Ray rate          : ${(total_rays / this.timer.duration / 1000).toFixed(
+Ray rate          = ${(total_rays / this.timer.duration / 1000).toFixed(
             4
         )} rays/ns
-Image width       : ${renderResult.width}
-Image height      : ${renderResult.height}
-Samples per pixel : ${renderResult.samples_per_pixel}`;
+Image width       = ${renderResult.width}
+Image height      = ${renderResult.height}
+Samples per pixel = ${renderResult.samples_per_pixel}`;
     }
 
     postRender(renderResult) {
