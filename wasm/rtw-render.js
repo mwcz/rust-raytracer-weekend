@@ -1,13 +1,20 @@
 import supportsModuleWorkers from "./caniuse-module-worker.js";
+import PfeIcon from "@patternfly/pfe-icon/dist/pfe-icon.js";
+
+PfeIcon.addIconSet(`pbp`, `https://clayto.com/icons/pbp/`, (name, iconSetName, iconSetPath) => {
+    let url = `${iconSetPath}${name}.svg`
+    console.log({url});
+    return url;
+});
 
 function sleep(ms) {
-    return new Promise( (resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export default class RtwRender extends HTMLElement {
     constructor() {
         super();
-        this.attachShadow({ mode: "open" });
+        this.attachShadow({mode: "open"});
         this.renderCount = 0;
         this.active = false;
         fetch(`${import.meta.url}/../wasm_bg.wasm`);
@@ -42,6 +49,12 @@ export default class RtwRender extends HTMLElement {
                 button:active, button:focus {
                     background: var(--rtw-button-background-active, #3f3f3f);
                 }
+                button pfe-icon {
+                    --pfe-icon--color: var(--pbp-blue, white);
+                }
+                button[disabled] pfe-icon {
+                    --pfe-icon--color: grey;
+                }
                 .log {
                   margin-bottom: 0;
                   font-family: monospace;
@@ -52,7 +65,10 @@ export default class RtwRender extends HTMLElement {
 
             <canvas width=500 height=333></canvas>
             <div class=controls>
-                <button disabled>Start</button>
+                <button disabled>
+                    <pfe-icon icon=pbp-play disabled></pfe-icon>
+                </button>
+                    <pfe-icon icon=pbp-step disabled></pfe-icon>
             </div>
             <p class="log">Total rays        = -
 Total duration    = -
@@ -112,7 +128,7 @@ Samples per pixel = -</p>
 
     createWorker() {
         const workerUrl = new URL(`${import.meta.url}/../wasm-worker.js`);
-        const worker = new Worker(workerUrl.href, { type: "module" });
+        const worker = new Worker(workerUrl.href, {type: "module"});
         worker.addEventListener("message", async (e) => {
             if (e.data.status === "success") {
                 if (e.data.data.renderResult) {
@@ -194,7 +210,7 @@ Samples per pixel = ${renderResult.samples_per_pixel}`;
             this.imageData = new ImageData(renderResult.pixels, renderResult.width);
         }
         else {
-            const pixels = this.imageData.data.map( (c, i) => c * this.renderCount / (this.renderCount + 1) + renderResult.pixels[i] * 1 / (this.renderCount + 1) );
+            const pixels = this.imageData.data.map((c, i) => c * this.renderCount / (this.renderCount + 1) + renderResult.pixels[i] * 1 / (this.renderCount + 1));
             this.imageData = new ImageData(pixels, renderResult.width);
         }
 

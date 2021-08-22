@@ -15,12 +15,12 @@ addEventListener("message", async (e) => {
             wasmRender = module.wasmRender;
             await module.wasmInit();
             initialized = true;
-            postMessage({ status: "success", data: { initialized } });
+            postMessage({status: "success", data: {initialized}});
         } catch (e) {
             console.error(e);
             postMessage({
                 status: "error",
-                data: { type: "import" },
+                data: {type: "import"},
                 message: "error occurred during web worker import",
             });
         }
@@ -32,6 +32,10 @@ addEventListener("message", async (e) => {
                 data: {
                     initialized,
                     renderResult: {
+                        // directly reference each property returned from wasm,
+                        // otherwise wasm-bindgen seems to clear the pointers
+                        // and the properties cann't be referenced later. TODO
+                        // figure out more about why this happens.
                         pixels: renderResult.pixels,
                         total_rays: renderResult.total_rays,
                         width: renderResult.width,
@@ -45,7 +49,7 @@ addEventListener("message", async (e) => {
             console.error(error);
             postMessage({
                 status: "error",
-                data: { type: "render", error },
+                data: {type: "render", error},
                 message: "error occurred during render",
             });
         }
