@@ -119,8 +119,10 @@ Samples per pixel = ❔</p>
 
         this.btn.disabled = false;
 
-        this.log.textContent =
-            "Rendering will run on the main thread because Module Workers are not supported in this browser.  Expect lock-up during rendering.";
+        this.log.textContent = `Rendering will run on the main thread
+because Module Workers are not supported
+in this browser.  Expect lock-up during
+rendering.`;
     }
 
     /**
