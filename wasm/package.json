@@ -1,6 +1,6 @@
 {
   "name": "@mwcz/rtw-render",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "main": "dist/rtw-render.js",
   "files": [
     "dist"
