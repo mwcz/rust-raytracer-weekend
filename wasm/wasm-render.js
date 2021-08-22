@@ -9,13 +9,9 @@ import init, { render } from "./pkg/wasm.js";
  * https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
  */
 export async function wasmRender() {
-    const start = performance.now();
+    console.time("tracing rays");
     const renderResult = render();
-    const duration = performance.now() - start;
-
-    renderResult.duration = duration;
-
-    console.log({renderResult});
+    console.timeEnd("tracing rays");
 
     return renderResult;
 }
@@ -24,5 +20,7 @@ export async function wasmRender() {
  * Initialize the WASM module.
  */
 export async function wasmInit() {
+    console.time("init");
     await init();
+    console.timeEnd("init");
 }

@@ -59,7 +59,7 @@ pub fn render() -> WasmFinalImage {
     // let samples_per_pixel: i32 = 100;
     // let max_depth = 25;
 
-    let samples_per_pixel: i32 = 2;
+    let samples_per_pixel: i32 = 10;
     let max_depth = 5;
 
     // World
