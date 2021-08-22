@@ -45,7 +45,7 @@ pub fn scene() -> HittableList<f64> {
             z: -4.0,
         },
         radius: 1.0,
-        material: mirror_material.clone(),
+        material: mirror_material,
     }));
 
     // Blue sphere
@@ -56,7 +56,7 @@ pub fn scene() -> HittableList<f64> {
             z: -2.9,
         },
         radius: 1.0,
-        material: default_material.clone(),
+        material: default_material,
     }));
 
     // Glass sphere
@@ -85,7 +85,7 @@ pub fn scene() -> HittableList<f64> {
             z: -1.2,
         },
         radius: 1000.0,
-        material: ground_material.clone(),
+        material: ground_material,
     }));
 
     world

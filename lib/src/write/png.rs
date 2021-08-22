@@ -26,7 +26,7 @@ pub fn write(image_data: FinalImage) {
     for (i, pixel) in image_data.pixels.iter().enumerate() {
         let x = i as u32 % image_data.width;
         let y = i as u32 / image_data.width;
-        let color = get_color_u8(&&pixel, image_data.samples_per_pixel);
+        let color = get_color_u8(pixel, image_data.samples_per_pixel);
         buf.put_pixel(x, y, image::Rgb([color.x, color.y, color.z]));
     }
 

@@ -27,7 +27,7 @@ pub fn scene() -> HittableList<f64> {
             z: 0.0,
         },
         radius: 1000.0,
-        material: ground_material.clone(),
+        material: ground_material,
     }));
 
     // Sphere 1
@@ -48,7 +48,7 @@ pub fn scene() -> HittableList<f64> {
             z: 0.0,
         },
         radius: 1.0,
-        material: material1.clone(),
+        material: material1,
     }));
 
     // Sphere 2
@@ -68,7 +68,7 @@ pub fn scene() -> HittableList<f64> {
             z: 0.0,
         },
         radius: 1.0,
-        material: material2.clone(),
+        material: material2,
     }));
 
     // Sphere 3
@@ -89,7 +89,7 @@ pub fn scene() -> HittableList<f64> {
             z: 0.0,
         },
         radius: 1.0,
-        material: material3.clone(),
+        material: material3,
     }));
 
     let boundary = Point3 {
@@ -116,7 +116,7 @@ pub fn scene() -> HittableList<f64> {
                     world.add(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: sphere_material.clone(),
+                        material: sphere_material,
                     }));
                 } else if choose_mat < 0.85 {
                     let albedo = Color::random_range(0.5, 1.0);
@@ -126,7 +126,7 @@ pub fn scene() -> HittableList<f64> {
                     world.add(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: sphere_material.clone(),
+                        material: sphere_material,
                     }));
                 } else {
                     let albedo = Color::random_range(0.8, 1.0);
@@ -135,7 +135,7 @@ pub fn scene() -> HittableList<f64> {
                     world.add(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: sphere_material.clone(),
+                        material: sphere_material,
                     }));
                 }
             }

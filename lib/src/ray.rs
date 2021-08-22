@@ -32,13 +32,13 @@ impl<T: Float + Debug> Ray<T> {
             return Color::zero();
         }
 
-        if world.hit(&self, T::from(0.001).unwrap(), T::infinity(), rec) {
+        if world.hit(self, T::from(0.001).unwrap(), T::infinity(), rec) {
             let mut scattered = Ray::<T>::new();
             let mut attenuation = Color::<T>::zero();
 
             let is_scattered = rec
                 .material
-                .scatter(&self, &*rec, &mut attenuation, &mut scattered);
+                .scatter(self, &*rec, &mut attenuation, &mut scattered);
 
             if is_scattered {
                 return attenuation * scattered.color(rec, world, depth - 1);
@@ -60,7 +60,7 @@ impl<T: Float + Debug> Ray<T> {
 
         let t = T::from(0.5).unwrap() * (unit_direction.y + T::from(1.0).unwrap());
 
-        let color = Vec3 {
+        Vec3 {
             x: T::from(248.0 / 255.0).unwrap(),
             y: T::from(245.0 / 255.0).unwrap(),
             z: T::from(254.0 / 255.0).unwrap(),
@@ -69,9 +69,13 @@ impl<T: Float + Debug> Ray<T> {
                 x: T::from(139.0 / 255.0).unwrap(),
                 y: T::from(179.0 / 255.0).unwrap(),
                 z: T::from(237.0 / 255.0).unwrap(),
-            } * t;
+            } * t
+    }
+}
 
-        color
+impl<T: Float + Debug> Default for Ray<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

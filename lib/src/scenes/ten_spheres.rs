@@ -24,9 +24,9 @@ pub fn scene() -> HittableList<f64> {
 
     let grey_material = Rc::new(material::Lambertian {
         albedo: Color {
-            x: 255.0 / 255.0,
-            y: 255.0 / 255.0,
-            z: 255.0 / 255.0,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
         },
     });
 
@@ -51,7 +51,7 @@ pub fn scene() -> HittableList<f64> {
         albedo: Color {
             x: 253.0 / 255.0,
             y: 253.0 / 255.0,
-            z: 255.0 / 255.0,
+            z: 1.0,
         },
         fuzz: 0.0,
     });
@@ -73,7 +73,7 @@ pub fn scene() -> HittableList<f64> {
             z: -2.705 - 0.5,
         },
         radius: 0.9,
-        material: grey_material.clone(),
+        material: grey_material,
     }));
 
     // Sphere 2
@@ -84,7 +84,7 @@ pub fn scene() -> HittableList<f64> {
             z: -4.028 - 0.5,
         },
         radius: 0.9,
-        material: metal_material.clone(),
+        material: metal_material,
     }));
 
     // Sphere 3 (center)
@@ -95,7 +95,7 @@ pub fn scene() -> HittableList<f64> {
             z: -4.3 - 0.5,
         },
         radius: 0.9,
-        material: default_material.clone(),
+        material: default_material,
     }));
 
     // Sphere 4
@@ -106,7 +106,7 @@ pub fn scene() -> HittableList<f64> {
             z: -4.028 - 0.5,
         },
         radius: 0.9,
-        material: mirror_material.clone(),
+        material: mirror_material,
     }));
 
     // Sphere 5
@@ -117,7 +117,7 @@ pub fn scene() -> HittableList<f64> {
             z: -2.705 - 0.5,
         },
         radius: 0.9,
-        material: metal_red_material.clone(),
+        material: metal_red_material,
     }));
 
     for s in 0..5 {
@@ -149,7 +149,7 @@ pub fn scene() -> HittableList<f64> {
             z: -1.2,
         },
         radius: 1000.0,
-        material: ground_material.clone(),
+        material: ground_material,
     }));
 
     world
