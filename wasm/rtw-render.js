@@ -12,12 +12,14 @@ export default class RtwRender extends HTMLElement {
                     display: inline-block;
                     background-color: var(--rtw-background-color, black);
                     padding: 14px;
+                    max-width: 100%;
                 }
                 canvas {
                     image-rendering: -moz-crisp-edges;
                     image-rendering: -webkit-crisp-edges;
                     image-rendering: pixelated;
                     image-rendering: crisp-edges;
+                    max-width: 100%;
                 }
                 .controls {
                     margin-top: 8px;
@@ -42,6 +44,7 @@ export default class RtwRender extends HTMLElement {
                   font-family: monospace;
                   white-space: pre;
                   line-height: 1.4;
+                  overflow-x: auto;
                 }
             </style>
 
