@@ -6,7 +6,8 @@ It supports command-line and WebAssembly.
 
 ## Blog posts
 
- - [Shaking off the Rust 1: Ray tracing in One Weekend](https://clayto.com/2021/02/shaking-off-the-rust-1-ray-tracing-in-one-weekend/)
+ - [Shaking Off the Rust 1: Ray Tracing in One Weekend](https://clayto.com/2021/02/shaking-off-the-rust-1-ray-tracing-in-one-weekend/)
+ - [Shaking Off the Rust 2: Ray Tracing in WebAssembly](https://clayto.com/2021/07/shaking-off-the-rust-2-ray-tracing-in-webassembly/)
 
 ## Example renders
 
