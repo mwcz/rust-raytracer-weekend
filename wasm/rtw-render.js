@@ -1,10 +1,15 @@
-import "./rtw-timer.js";
 import supportsModuleWorkers from "./caniuse-module-worker.js";
+
+function sleep(ms) {
+    return new Promise( (resolve) => setTimeout(resolve, ms));
+}
 
 export default class RtwRender extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: "open" });
+        this.renderCount = 0;
+        this.active = false;
         fetch(`${import.meta.url}/../wasm_bg.wasm`);
         this.shadowRoot.innerHTML = `
             <style>
@@ -45,25 +50,23 @@ export default class RtwRender extends HTMLElement {
                 }
             </style>
 
-            <canvas width="500" height="333"></canvas>
-            <div class="controls">
-                <button disabled>Render</button>
-                <rtw-timer></rtw-timer>
+            <canvas width=500 height=333></canvas>
+            <div class=controls>
+                <button disabled>Start</button>
             </div>
-            <p class="log">Total rays        = ❔
-Total duration    = ❔
-Time per ray      = ❔
-Ray rate          = ❔
-Image width       = ❔
-Image height      = ❔
-Samples per pixel = ❔</p>
+            <p class="log">Total rays        = -
+Total duration    = -
+Time per ray      = -
+Rays per time     = -
+Image width       = -
+Image height      = -
+Samples per pixel = -</p>
         `;
     }
 
     async connectedCallback() {
         this.btn = this.shadowRoot.querySelector("button");
         this.canvas = this.shadowRoot.querySelector("canvas");
-        this.timer = this.shadowRoot.querySelector("rtw-timer");
         this.log = this.shadowRoot.querySelector(".log");
 
         this.ctx = this.canvas.getContext("2d");
@@ -82,9 +85,29 @@ Samples per pixel = ❔</p>
         this.wasmRender = null;
 
         this.btn.addEventListener("click", async () => {
-            await this.preRender();
-            this.render();
+            if (this.active) {
+                this.pauseRenderLoop();
+            } else {
+                this.startRenderLoop();
+            }
         });
+    }
+
+    async startRenderLoop() {
+        await this.preRender();
+
+        this.active = true;
+
+        this.render();
+
+        while (this.active) {
+            await sleep(1100);
+            this.render();
+        }
+    }
+
+    async pauseRenderLoop() {
+        this.active = false;
     }
 
     createWorker() {
@@ -99,7 +122,6 @@ Samples per pixel = ❔</p>
                 }
             } else if (e.data.status === "error") {
                 if (e.data.data.type === "render") {
-                    this.timer.pause();
                     this.log.textContent =
                         "Error occurred in worker during rendering.";
                 }
@@ -129,11 +151,9 @@ Samples per pixel = ❔</p>
      */
     async preRender() {
         // clearImage();
-        this.timer.start();
 
         // if running on the main thread, pause the timer, we'll update it once at the end.
         if (!supportsModuleWorkers()) {
-            // this.timer.pause();
         }
         this.btn.disabled = true;
     }
@@ -157,11 +177,11 @@ Samples per pixel = ❔</p>
         this.log.textContent = `Total rays        = ${total_rays.toLocaleString(
             "en-US"
         )}
-Total duration    = ${this.timer.duration.toFixed(1)} ms
-Time per ray      = ${((this.timer.duration / total_rays) * 1000).toFixed(
+Total duration    = ${renderResult.duration.toFixed(1)} ms
+Time per ray      = ${((renderResult.duration / total_rays) * 1000).toFixed(
             4
         )} microseconds/ray
-Ray rate          = ${(total_rays / this.timer.duration / 1000).toFixed(
+Ray rate          = ${(total_rays / renderResult.duration / 1000).toFixed(
             4
         )} rays/microsecond
 Image width       = ${renderResult.width}
@@ -170,22 +190,30 @@ Samples per pixel = ${renderResult.samples_per_pixel}`;
     }
 
     postRender(renderResult) {
+        if (this.renderCount === 0) {
+            this.imageData = new ImageData(renderResult.pixels, renderResult.width);
+        }
+        else {
+            const pixels = this.imageData.data.map( (c, i) => c * this.renderCount / (this.renderCount + 1) + renderResult.pixels[i] * 1 / (this.renderCount + 1) );
+            this.imageData = new ImageData(pixels, renderResult.width);
+        }
+
         console.time("drawing canvas");
         this.canvas.width = renderResult.width;
         this.canvas.height = renderResult.height;
         this.ctx.putImageData(
-            new ImageData(renderResult.pixels, renderResult.width),
+            this.imageData,
             0,
             0
         );
         console.timeEnd("drawing canvas");
-        this.timer.step();
-        this.timer.stop();
 
         this.writeStats(renderResult);
 
-        this.btn.innerText = "Re-render";
+        this.btn.innerText = "Pause";
         this.btn.disabled = false;
+
+        this.renderCount++;
     }
 }
 

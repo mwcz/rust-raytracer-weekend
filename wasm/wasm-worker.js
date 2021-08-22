@@ -11,7 +11,7 @@ console.log("wasm-worker module");
 addEventListener("message", async (e) => {
     if (e.data === "init") {
         try {
-            const module = await import(`${import.meta.url}/../wasm-render.js`);
+            const module = await import(`./wasm-render.js`);
             wasmRender = module.wasmRender;
             await module.wasmInit();
             initialized = true;
@@ -37,6 +37,7 @@ addEventListener("message", async (e) => {
                         width: renderResult.width,
                         height: renderResult.height,
                         samples_per_pixel: renderResult.samples_per_pixel,
+                        duration: renderResult.duration,
                     },
                 },
             });
