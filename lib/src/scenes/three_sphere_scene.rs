@@ -3,16 +3,16 @@ use crate::material;
 use crate::objects::sphere::Sphere;
 use crate::vec::Color;
 use crate::vec::Point3;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Create a simple, efficient scene with three spheres.
 #[allow(dead_code)]
-pub fn scene() -> HittableList<f64> {
+pub fn scene() -> Arc<HittableList<f64>> {
     let mut world = HittableList::new(Vec::new());
 
     // Materials
 
-    let default_material = Rc::new(material::Lambertian {
+    let default_material = Arc::new(material::Lambertian {
         albedo: Color {
             x: 122.0 / 255.0,
             y: 175.0 / 255.0,
@@ -20,7 +20,7 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let ground_material = Rc::new(material::Lambertian {
+    let ground_material = Arc::new(material::Lambertian {
         albedo: Color {
             x: 28.0 / 255.0,
             y: 28.0 / 255.0,
@@ -28,7 +28,7 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let mirror_material = Rc::new(material::Metal {
+    let mirror_material = Arc::new(material::Metal {
         albedo: Color {
             x: 224.0 / 255.0,
             y: 232.0 / 255.0,
@@ -67,7 +67,7 @@ pub fn scene() -> HittableList<f64> {
             z: -0.1,
         },
         radius: 0.22,
-        material: Rc::new(material::Dielectric {
+        material: Arc::new(material::Dielectric {
             ir: 1.5,
             albedo: Color {
                 x: 1.0,
@@ -88,5 +88,5 @@ pub fn scene() -> HittableList<f64> {
         material: ground_material,
     }));
 
-    world
+    Arc::new(world)
 }

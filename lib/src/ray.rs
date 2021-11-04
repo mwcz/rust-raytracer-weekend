@@ -1,5 +1,6 @@
 use num::traits::Float;
 use std::fmt::Debug;
+use std::sync::Arc;
 
 use crate::hit::{HitRecord, HittableList};
 use crate::vec::{Color, Point3, Vec3};
@@ -25,7 +26,12 @@ impl<T: Float + Debug> Ray<T> {
         self.origin + self.direction * t
     }
 
-    pub fn color(&self, rec: &mut HitRecord<T>, world: &HittableList<T>, depth: i32) -> Color<T> {
+    pub fn color(
+        &self,
+        rec: &mut HitRecord<T>,
+        world: Arc<HittableList<T>>,
+        depth: i32,
+    ) -> Color<T> {
         rec.ray_count += 1;
 
         if depth <= 0 {

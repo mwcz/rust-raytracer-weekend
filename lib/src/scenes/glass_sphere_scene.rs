@@ -3,17 +3,17 @@ use crate::material;
 use crate::objects::sphere::Sphere;
 use crate::vec::Color;
 use crate::vec::Point3;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Create a scene with five large spheres in the background and five glassy colored spheres in the
 /// foreground.
 #[allow(dead_code)]
-pub fn scene() -> HittableList<f64> {
+pub fn scene() -> Arc<HittableList<f64>> {
     let mut world = HittableList::new(Vec::new());
 
     // Materials
 
-    let default_material = Rc::new(material::Lambertian {
+    let default_material = Arc::new(material::Lambertian {
         albedo: Color {
             x: 122.0 / 255.0,
             y: 175.0 / 255.0,
@@ -21,7 +21,7 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let grey_material = Rc::new(material::Lambertian {
+    let grey_material = Arc::new(material::Lambertian {
         albedo: Color {
             x: 1.0,
             y: 1.0,
@@ -29,7 +29,7 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let ground_material = Rc::new(material::Lambertian {
+    let ground_material = Arc::new(material::Lambertian {
         albedo: Color {
             x: 72.0 / 255.0,
             y: 72.0 / 255.0,
@@ -37,7 +37,7 @@ pub fn scene() -> HittableList<f64> {
         },
     });
 
-    let metal_material = Rc::new(material::Metal {
+    let metal_material = Arc::new(material::Metal {
         albedo: Color {
             x: 64.0 / 255.0,
             y: 64.0 / 255.0,
@@ -46,7 +46,7 @@ pub fn scene() -> HittableList<f64> {
         fuzz: 0.1,
     });
 
-    let mirror_material = Rc::new(material::Metal {
+    let mirror_material = Arc::new(material::Metal {
         albedo: Color {
             x: 253.0 / 255.0,
             y: 253.0 / 255.0,
@@ -55,7 +55,7 @@ pub fn scene() -> HittableList<f64> {
         fuzz: 0.0,
     });
 
-    let metal_red_material = Rc::new(material::Metal {
+    let metal_red_material = Arc::new(material::Metal {
         albedo: Color {
             x: 208.0 / 255.0,
             y: 66.0 / 255.0,
@@ -126,7 +126,7 @@ pub fn scene() -> HittableList<f64> {
             z: -1.0,
         },
         radius: 0.9,
-        material: Rc::new(material::Dielectric {
+        material: Arc::new(material::Dielectric {
             ir: 1.5,
             albedo: Color {
                 x: 1.0,
@@ -147,5 +147,5 @@ pub fn scene() -> HittableList<f64> {
         material: ground_material,
     }));
 
-    world
+    Arc::new(world)
 }

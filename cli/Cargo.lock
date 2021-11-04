@@ -347,12 +347,13 @@ version = "0.1.0"
 dependencies = [
  "num",
  "pbr",
+ "rayon",
  "rtw-lib",
 ]
 
 [[package]]
 name = "rtw-lib"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "image",
  "lazy_static",

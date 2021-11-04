@@ -9,12 +9,12 @@ use crate::ray::Ray;
 use crate::vec::Point3;
 use num::Float;
 use std::fmt::Debug;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct Sphere<T: Float> {
     pub center: Point3<T>,
     pub radius: T,
-    pub material: Rc<dyn Material<T>>,
+    pub material: Arc<dyn Material<T> + Send + Sync>,
 }
 
 impl<T: Float + Debug> Hittable<T> for Sphere<T> {

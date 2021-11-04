@@ -7,19 +7,19 @@ use crate::ray::Ray;
 use crate::vec::{Point3, Vec3};
 use num::Float;
 use std::fmt::Debug;
-use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct HitRecord<T: Float> {
     pub p: Point3<T>,
     pub normal: Vec3<T>,
-    pub material: Rc<dyn Material<T>>,
+    pub material: Arc<dyn Material<T> + Send>,
     pub t: T,
     pub front_face: bool,
     pub ray_count: u64,
 }
 
 impl<T: Float> HitRecord<T> {
-    pub fn new(material: Rc<dyn Material<T>>) -> HitRecord<T> {
+    pub fn new(material: Arc<dyn Material<T> + Send>) -> HitRecord<T> {
         HitRecord {
             p: Point3::zero(),
             normal: Vec3::zero(),
@@ -49,12 +49,12 @@ pub trait Hittable<T: Float> {
 /////////////////////
 
 pub struct HittableList<T: Float> {
-    objects: Vec<Box<dyn Hittable<T>>>,
+    objects: Vec<Box<dyn Hittable<T> + Send + Sync>>,
 }
 
 #[allow(dead_code)]
 impl<T: Float + Debug> HittableList<T> {
-    pub fn new(objects: Vec<Box<dyn Hittable<T>>>) -> HittableList<T> {
+    pub fn new(objects: Vec<Box<dyn Hittable<T> + Send + Sync>>) -> HittableList<T> {
         HittableList::<T> { objects }
     }
 
@@ -63,7 +63,7 @@ impl<T: Float + Debug> HittableList<T> {
         self.objects.clear();
     }
 
-    pub fn add(&mut self, obj: Box<dyn Hittable<T>>) {
+    pub fn add(&mut self, obj: Box<dyn Hittable<T> + Send + Sync>) {
         self.objects.push(obj);
     }
 
