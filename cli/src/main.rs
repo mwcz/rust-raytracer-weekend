@@ -24,8 +24,8 @@ fn render() {
     // let samples_per_pixel: i32 = 100;
     // let max_depth = 10;
 
-    let aspect_ratio = 3.0 / 2.0;
-    let width = 1600.0;
+    let aspect_ratio = 16.0 / 10.0;
+    let width = 2400.0;
     let height = (width / aspect_ratio).floor();
 
     // Progress bar
@@ -34,8 +34,8 @@ fn render() {
     // let samples_per_pixel: i32 = 100;
     // let max_depth = 25;
 
-    let samples_per_pixel: i32 = 15;
-    let max_depth = 8;
+    let samples_per_pixel: i32 = 50;
+    let max_depth = 10;
 
     // World
 
@@ -91,8 +91,6 @@ fn render() {
             z: 238.0 / 255.0,
         },
     });
-
-    let mut total_rays: u64 = 0;
 
     // Original loops
     // for y in (0..(height as i32)).rev() {
@@ -168,45 +166,52 @@ fn render() {
 
     // pixels.iter() which will eventually (hopefully) lead to par_iter
     let total_rays = pixels
-        .par_iter_mut()
+        .par_chunks_mut(1)
         .rev()
         .enumerate()
-        .map(|(i, p)| {
-            let y = (i as f64 / width).floor();
-            let x = i as f64 % width;
-
+        .map(|(i, pixel_slice)| {
             let mut thread_ray_total = 0;
 
-            (0..samples_per_pixel).for_each(|_| {
-                // don't use RNG if there's only one sample per pixel
-                let u_rand = if samples_per_pixel > 1 {
-                    random_float()
-                } else {
-                    1.0
-                };
+            pixel_slice.iter_mut().for_each(|p| {
+                let y = (i as f64 / width).floor();
+                let x = i as f64 % width;
 
-                let v_rand = if samples_per_pixel > 1 {
-                    random_float()
-                } else {
-                    1.0
-                };
+                (0..samples_per_pixel).for_each(|_| {
+                    // don't use RNG if there's only one sample per pixel
+                    let u_rand = if samples_per_pixel > 1 {
+                        random_float()
+                    } else {
+                        1.0
+                    };
 
-                let u = (u_rand + x as f64) / (width - 1.0);
-                let v = (v_rand + y as f64) / (height - 1.0);
+                    let v_rand = if samples_per_pixel > 1 {
+                        random_float()
+                    } else {
+                        1.0
+                    };
 
-                let ray = cam.get_ray(u, v);
+                    let u = (u_rand + x as f64) / (width - 1.0);
+                    let v = (v_rand + y as f64) / (height - 1.0);
 
-                let mut rec = HitRecord::new(default_material.clone());
+                    let ray = cam.get_ray(u, v);
 
-                *p += ray.color(&mut rec, world.clone(), max_depth);
+                    let mut rec = HitRecord::new(default_material.clone());
 
-                thread_ray_total += rec.ray_count;
+                    *p += ray.color(&mut rec, world.clone(), max_depth);
+
+                    thread_ray_total += rec.ray_count;
+                });
+
+                // if random_float::<f64>() > 0.999 {
+                //     println!("{}, {}", x, y);
+                // }
+
+                // println!("yes");
+                // pb.inc();
+
+                // println!("thread_ray_total: {}", thread_ray_total);
             });
 
-            // println!("yes");
-            // pb.inc();
-
-            // println!("thread_ray_total: {}", thread_ray_total);
             thread_ray_total
         })
         .sum();

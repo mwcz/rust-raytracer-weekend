@@ -8,11 +8,4 @@ pub mod scenes;
 pub mod vec;
 pub mod write;
 
-use lazy_static::lazy_static;
-// use simple_mutex::Mutex;
-// use std::sync::Mutex;
-use spin_sync::Mutex;
-
-lazy_static! {
-    static ref RNG: Mutex<u64> = Mutex::new(0xda942042e4dd58b5);
-}
+static mut RNG: u64 = 0xda942042e4dd58b5;

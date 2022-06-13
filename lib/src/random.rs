@@ -8,10 +8,10 @@ pub fn random_float<T: Float>() -> T {
     let mut num: u64;
     {
         // scope controls when the RNG mutex is released
-        let mut rng = RNG.lock().unwrap();
-
-        *rng = rng.wrapping_mul(0xda942042e4dd58b5u64);
-        num = *rng;
+        unsafe {
+            RNG = RNG.wrapping_mul(0xda942042e4dd58b5u64);
+            num = RNG;
+        }
     }
 
     num >>= 32;
